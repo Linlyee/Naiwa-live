@@ -1,161 +1,133 @@
-![](./assets/banner.jpg)
-
-<h1 align="center">Open-LLM-VTuber (抖音拟真互动直播定制版)</h1>
-<h3 align="center">
-
-> 🚀 **[点击查看：抖音 AI 拟真互动直播间套件完整使用指南 (README_DOUYIN_LIVE.md)](./README_DOUYIN_LIVE.md)** 🚀
-
-
-[![GitHub release](https://img.shields.io/github/v/release/Open-LLM-VTuber/Open-LLM-VTuber)](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/releases) 
-[![license](https://img.shields.io/github/license/Open-LLM-VTuber/Open-LLM-VTuber)](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/blob/master/LICENSE) 
-[![CodeQL](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/actions/workflows/codeql.yml/badge.svg)](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/actions/workflows/codeql.yml)
-[![Ruff](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/actions/workflows/ruff.yml/badge.svg)](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/actions/workflows/ruff.yml)
-[![Docker](https://img.shields.io/badge/Open-LLM-VTuber%2FOpen--LLM--VTuber-%25230db7ed.svg?logo=docker&logoColor=blue&labelColor=white&color=blue)](https://hub.docker.com/r/Open-LLM-VTuber/open-llm-vtuber) 
-[![QQ User Group](https://img.shields.io/badge/QQ_User_Group-792615362-white?style=flat&logo=qq&logoColor=white)](https://qm.qq.com/q/ngvNUQpuKI)
-[![Static Badge](https://img.shields.io/badge/Join%20Chat-Zulip?style=flat&logo=zulip&label=Zulip(dev-community)&color=blue&link=https%3A%2F%2Folv.zulipchat.com)](https://olv.zulipchat.com)
-
-> **📢 v2.0 Development**: We are focusing on Open-LLM-VTuber v2.0 — a complete rewrite of the codebase. v2.0 is currently in its early discussion and planning phase. We kindly ask you to refrain from opening new issues or pull requests for feature requests on v1. To participate in the v2 discussions or contribute, join our developer community on [Zulip](https://olv.zulipchat.com). Weekly meeting schedules will be announced on Zulip. We will continue fixing bugs for v1 and work through existing pull requests.
-
-[![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/yi.ting)
-[![](https://dcbadge.limes.pink/api/server/3UDA8YFDXx)](https://discord.gg/3UDA8YFDXx)
-
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Open-LLM-VTuber/Open-LLM-VTuber)
-
-ENGLISH README | [中文 README](./README.CN.md) | [한국어 README](./README.KR.md) | [日本語 README](./README.JP.md)
-
-[Documentation](https://open-llm-vtuber.github.io/docs/quick-start) | [![Roadmap](https://img.shields.io/badge/Roadmap-GitHub_Project-yellow)](https://github.com/orgs/Open-LLM-VTuber/projects/2)
-
-<a href="https://trendshift.io/repositories/27063" target="_blank"><img src="https://trendshift.io/api/badge/repositories/27063" alt="Open-LLM-VTuber%2FOpen-LLM-VTuber | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-
-</h3>
-
-
-> 常见问题 Common Issues doc (Written in Chinese): https://docs.qq.com/pdf/DTFZGQXdTUXhIYWRq
->
-> User Survey: https://forms.gle/w6Y6PiHTZr1nzbtWA
->
-> 调查问卷(中文): https://wj.qq.com/s2/16150415/f50a/
-
-
-
-> :warning: This project is in its early stages and is currently under **active development**.
-
-> :warning: If you want to run the server remotely and access it on a different machine, such as running the server on your computer and access it on your phone, you will need to configure `https`, because the microphone on the front end will only launch in a secure context (a.k.a. https or localhost). See [MDN Web Doc](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia). Therefore, you should configure https with a reverse proxy to access the page on a remote machine (non-localhost).
-
-
-
-## ⭐️ What is this project?
-
-
-**Open-LLM-VTuber** is a unique **voice-interactive AI companion** that not only supports **real-time voice conversations**  and **visual perception** but also features a lively **Live2D avatar**. All functionalities can run completely offline on your computer!
-
-You can treat it as your personal AI companion — whether you want a `virtual girlfriend`, `boyfriend`, `cute pet`, or any other character, it can meet your expectations. The project fully supports `Windows`, `macOS`, and `Linux`, and offers two usage modes: web version and desktop client (with special support for **transparent background desktop pet mode**, allowing the AI companion to accompany you anywhere on your screen).
-
-Although the long-term memory feature is temporarily removed (coming back soon), thanks to the persistent storage of chat logs, you can always continue your previous unfinished conversations without losing any precious interactive moments.
-
-In terms of backend support, we have integrated a rich variety of LLM inference, text-to-speech, and speech recognition solutions. If you want to customize your AI companion, you can refer to the [Character Customization Guide](https://open-llm-vtuber.github.io/docs/user-guide/live2d) to customize your AI companion's appearance and persona.
-
-The reason it's called `Open-LLM-Vtuber` instead of `Open-LLM-Companion` or `Open-LLM-Waifu` is because the project's initial development goal was to use open-source solutions that can run offline on platforms other than Windows to recreate the closed-source AI Vtuber `neuro-sama`.
-
-### 👀 Demo
-| ![](assets/i1.jpg) | ![](assets/i2.jpg) |
-|:---:|:---:|
-| ![](assets/i3.jpg) | ![](assets/i4.jpg) |
-
-
-## ✨ Features & Highlights
-
-- 🖥️ **Cross-platform support**: Perfect compatibility with macOS, Linux, and Windows. We support NVIDIA and non-NVIDIA GPUs, with options to run on CPU or use cloud APIs for resource-intensive tasks. Some components support GPU acceleration on macOS.
-
-- 🔒 **Offline mode support**: Run completely offline using local models - no internet required. Your conversations stay on your device, ensuring privacy and security.
-
-- 💻 **Attractive and powerful web and desktop clients**: Offers both web version and desktop client usage modes, supporting rich interactive features and personalization settings. The desktop client can switch freely between window mode and desktop pet mode, allowing the AI companion to be by your side at all times.
-
-- 🎯 **Advanced interaction features**:
-  - 👁️ Visual perception, supporting camera, screen recording and screenshots, allowing your AI companion to see you and your screen
-  - 🎤 Voice interruption without headphones (AI won't hear its own voice)
-  - 🫱 Touch feedback, interact with your AI companion through clicks or drags
-  - 😊 Live2D expressions, set emotion mapping to control model expressions from the backend
-  - 🐱 Pet mode, supporting transparent background, global top-most, and mouse click-through - drag your AI companion anywhere on the screen
-  - 💭 Display AI's inner thoughts, allowing you to see AI's expressions, thoughts and actions without them being spoken
-  - 🗣️ AI proactive speaking feature
-  - 💾 Chat log persistence, switch to previous conversations anytime
-  - 🌍 TTS translation support (e.g., chat in Chinese while AI uses Japanese voice)
-
-- 🧠 **Extensive model support**:
-  - 🤖 Large Language Models (LLM): Ollama, OpenAI (and any OpenAI-compatible API), Gemini, Claude, Mistral, DeepSeek, Zhipu AI, GGUF, LM Studio, vLLM, etc.
-  - 🎙️ Automatic Speech Recognition (ASR): sherpa-onnx, FunASR, Faster-Whisper, Whisper.cpp, Whisper, Groq Whisper, Azure ASR, etc.
-  - 🔊 Text-to-Speech (TTS): sherpa-onnx, pyttsx3, MeloTTS, Coqui-TTS, GPTSoVITS, Bark, CosyVoice, Edge TTS, Fish Audio, Azure TTS, etc.
-
-- 🔧 **Highly customizable**:
-  - ⚙️ **Simple module configuration**: Switch various functional modules through simple configuration file modifications, without delving into the code
-  - 🎨 **Character customization**: Import custom Live2D models to give your AI companion a unique appearance. Shape your AI companion's persona by modifying the Prompt. Perform voice cloning to give your AI companion the voice you desire
-  - 🧩 **Flexible Agent implementation**: Inherit and implement the Agent interface to integrate any Agent architecture, such as HumeAI EVI, OpenAI Her, Mem0, etc.
-  - 🔌 **Good extensibility**: Modular design allows you to easily add your own LLM, ASR, TTS, and other module implementations, extending new features at any time
-
-
-## 👥 User Reviews
-> Thanks to the developer for open-sourcing and sharing the girlfriend for everyone to use
-> 
-> This girlfriend has been used over 100,000 times
-
-
-## 🚀 Quick Start
-
-Please refer to the [Quick Start](https://open-llm-vtuber.github.io/docs/quick-start) section in our documentation for installation.
-
-
-
-## ☝ Update
-> :warning: `v1.0.0` has breaking changes and requires re-deployment. You *may* still update via the method below, but the `conf.yaml` file is incompatible and most of the dependencies needs to be reinstalled with `uv`. For those who came from versions before `v1.0.0`, I recommend deploy this project again with the [latest deployment guide](https://open-llm-vtuber.github.io/docs/quick-start).
-
-Please use `uv run update.py` to update if you installed any versions later than `v1.0.0`.
-
-## 😢 Uninstall  
-Most files, including Python dependencies and models, are stored in the project folder.
-
-However, models downloaded via ModelScope or Hugging Face may also be in `MODELSCOPE_CACHE` or `HF_HOME`. While we aim to keep them in the project's `models` directory, it's good to double-check.  
-
-Review the installation guide for any extra tools you no longer need, such as `uv`, `ffmpeg`, or `deeplx`.  
-
-## 🤗 Want to contribute?
-Checkout the [development guide](https://docs.llmvtuber.com/docs/development-guide/overview).
-
-
-# 🎉🎉🎉 Related Projects
-
-[ylxmf2005/LLM-Live2D-Desktop-Assitant](https://github.com/ylxmf2005/LLM-Live2D-Desktop-Assitant)
-- Your Live2D desktop assistant powered by LLM! Available for both Windows and MacOS, it senses your screen, retrieves clipboard content, and responds to voice commands with a unique voice. Featuring voice wake-up, singing capabilities, and full computer control for seamless interaction with your favorite character.
-
-
-
-
-
-
-## 📜 Third-Party Licenses
-
-### Live2D Sample Models Notice
-
-This project includes Live2D sample models provided by Live2D Inc. These assets are licensed separately under the Live2D Free Material License Agreement and the Terms of Use for Live2D Cubism Sample Data. They are not covered by the MIT license of this project.
-
-This content uses sample data owned and copyrighted by Live2D Inc. The sample data are utilized in accordance with the terms and conditions set by Live2D Inc. (See [Live2D Free Material License Agreement](https://www.live2d.jp/en/terms/live2d-free-material-license-agreement/) and [Terms of Use](https://www.live2d.com/eula/live2d-sample-model-terms_en.html)).
-
-Note: For commercial use, especially by medium or large-scale enterprises, the use of these Live2D sample models may be subject to additional licensing requirements. If you plan to use this project commercially, please ensure that you have the appropriate permissions from Live2D Inc., or use versions of the project without these models.
-
-
-## Contributors
-Thanks our contributors and maintainers for making this project possible.
-
-<a href="https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Open-LLM-VTuber/Open-LLM-VTuber" />
-</a>
-
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=Open-LLM-VTuber/open-llm-vtuber&type=Date)](https://star-history.com/#Open-LLM-VTuber/open-llm-vtuber&Date)
-
-
-
-
-
+# Naiwa-live · 抖音 AI 拟真互动直播间系统
+
+<div align="center">
+
+**专为抖音竖屏打造的 AI 虚拟主播互动系统**  
+*动态拟真角色引擎 ｜ 实时弹幕智能对答 ｜ 礼物声画暴击 ｜ VIP 互动点歌台 ｜ 硬件级音频隔离*
+
+</div>
+
+---
+
+## 📖 项目简介
+
+**Naiwa-live** 是一套面向抖音竖屏（9:16，1080×1920）直播间深度定制的 **AI 虚拟主播全自动互动解决方案**。
+
+系统集成了「纯前端矢量拟真动态引擎」、「WebSocket 弹幕实时中枢」、「全屏礼物特效与原声声优联动」、「VIP 智能排队点歌台」以及「硬件级音频隔离流控」。无论是无人值守的 24 小时自动互动直播，还是辅助真人开播，都能带来极高的粉丝留存与打赏转化体验。
+
+---
+
+## ✨ 核心特性与功能亮点
+
+### 1. 纯前端矢量拟真动态角色 (Flawless Rig Engine)
+- **1080×1920 原生竖屏适配**：专为移动端全屏推流优化，原生支持透明通道捕获。
+- **高拟真物理动画**：
+  - **待机状态**：平滑呼吸微摆、灵动眨眼与微表情。
+  - **说话状态**：实时自然唇形张合同步（Lip-sync 模拟）。
+  - **互动表情包**：
+    - 🌸 **害羞夸夸**：双颊浮现高原红微醺红晕。
+    - 🍳 **心动压扁**：瞬间受力压扁为荷包蛋饼，眼冒蚊香眼 `@_@`。
+    - 🎈 **贪吃过载**：身体充气急剧膨胀为大圆球，打饱嗝。
+    - 😆 **肚皮大笑**：圆滚滚肚皮随节奏上下震颤摇摆。
+    - ⚡ **果冻高弹跳 (Boing)**：原地高跃而起，落地伴随果冻回弹。
+
+### 2. 实时弹幕与大模型智能交互 (Live Bridge Server)
+- **全自动弹幕监听**：内置高性能 WebSocket 桥梁（端口 12393 / 8088），无缝接入直播间弹幕抓手。
+- **智能拟真对话**：支持接入本地 LLM、SiliconFlow、Gemini 等主流大模型，结合预设人设进行幽默机智的语音对答。
+- **暖场与感谢机制**：观众进房自动打招呼，点赞触发飘屏感谢与动态反馈。
+
+### 3. 沉浸式礼物打赏与声画联动
+- **全屏视觉暴击**：
+  - 小心心粉色粒子喷泉、啤酒醉醺摇晃、玫瑰花飞吻、满屏大金币瀑布大轰炸。
+- **专属原声声优配音**：
+  - 针对抖音常见常驻礼物（小心心、粉丝团灯牌、玫瑰、啤酒、甜甜圈、嘉年华等）深度定制录音棚级高保真原声音效与台词，即送即响，零延迟响应。
+
+### 4. 互动歌单与 VIP 智能点歌台
+- **观众弹幕点歌**：观众发送 `点歌 歌曲名`，系统自动识别并加入右侧动态悬浮歌单排队。
+- **VIP 礼物置顶加塞**：粉丝赠送指定礼物自动触发 **VIP 顶歌** 机制，皇冠悬浮置顶，并播报专属尊贵特权台词。
+- **DJ 智能伴奏串场**：在无人点歌或交互间隙，自动循环播放舒缓活泼的背景音乐，保证直播间绝不冷场。
+
+### 5. 硬件级音频隔离方案
+- 解决主播电脑杂音流入直播间的问题。
+- 通过虚拟声卡（VB-Audio Cable）将 AI 主播语音与背景音乐单独分流至直播伴侣，同时主播耳机可实时监听，而主播电脑的游戏声、聊天提示音不会泄露进直播间。
+
+---
+
+## 🗂️ 核心工程目录结构
+
+```text
+Naiwa-live/
+├── douyin_live/                 # 核心前台界面与互动中枢
+│   ├── index.html              # 1080x1920 完整竖屏互动直播画板（纯 CSS/SVG 拟真动画 + 歌单）
+│   ├── live_bridge_server.py   # WebSocket 弹幕事件调度与大模型逻辑网关
+│   ├── start_live_preview.py   # 本地 Web 页面预览服务
+│   ├── assets/                 # 角色高精切图、礼物特效与道具
+│   │   └── voice/              # 礼物专属声优配音音频
+│   └── music/                  # 待机背景伴奏音乐
+├── barrage_grab/                # 抖音实时弹幕捕获模块
+│   ├── config.json.template    # 弹幕抓手配置模板（填入直播间号）
+│   └── 启动弹幕抓手.bat         # 弹幕抓手独立启动器
+├── 【一键启动直播】.bat         # ★ 核心启动器：一键拉起后端网关、画板与直播窗口
+├── 【一键设置音频监听】.bat     # 快速配置虚拟声卡侦听至耳机
+├── 【打开QQ音乐网页版】.bat     # 点歌与伴奏联动专用浏览器窗口
+├── README.md                   # 项目主说明文档
+└── README_DOUYIN_LIVE.md       # 直播间玩法与配置详细手册
+```
+
+---
+
+## 🎮 弹幕互动指令一览
+
+| 指令类型 | 弹幕关键词 / 触发源 | 角色动作与表情 | 全屏视觉特效 | 语音反馈 |
+| :--- | :--- | :--- | :--- | :--- |
+| **日常口令** | `666` 或 `跳` | 果冻高弹跳 (Boing) | 星星闪烁 | 触发活力语音 |
+| **日常口令** | `睡觉` 或 `困了` | 闭眼呼呼大睡 | 头顶冒出 `Zzz...` 气泡 | “好困呀，谁也不准吵我睡觉觉……” |
+| **日常口令** | `夸夸` 或 `可爱` | 双颊泛起红晕害羞 | 飘出粉色小心心 | “哎呀呀，你们这么夸人家要害羞啦！” |
+| **互动点歌** | `点歌 歌名` | 举起麦克风欢呼 | 加入右侧歌单排队 | “收到点歌，已经帮你排在歌单里啦！” |
+| **礼物暴击** | 送出 **小心心** | 害羞心动 | 满屏小心心喷泉 | 专属心动感谢台词 |
+| **礼物暴击** | 送出 **啤酒** | 微醺摇晃 | 啤酒冒泡倾倒 | 专属豪迈感谢台词 |
+| **礼物暴击** | 送出 **玫瑰** | 甜美飞吻 | 玫瑰花瓣漫天飞舞 | “送你一个超级甜蜜的大飞吻！” |
+| **特权加塞** | 送出 **指定高阶礼物** | 戴上黄金皇冠 | 皇冠闪烁 + 歌单置顶 | 触发 VIP 顶歌播报与专属背景光效 |
+
+---
+
+## 🚀 快速上手与开播指南
+
+### 第一步：环境准备
+1. 确保系统安装了 **Python 3.10+**。
+2. 安装虚拟声卡驱动（如 **VB-Audio Virtual Cable**），用于声音隔离分流。
+3. （初次使用弹幕抓手）如需运行抓手，可运行 `barrage_grab/1_安装微软运行环境(仅初次需要).bat` 安装 .NET 运行时。
+
+### 第二步：配置你的直播间
+1. 进入 `barrage_grab/` 目录，将 `config.json.template` 复制为 `config.json`。
+2. 打开 `config.json`，将 `"RoomId"` 修改为你自己抖音开播后的真实直播间 ID（或长链接）。
+3. （可选）如果使用大模型或云端 TTS，在系统环境变量中设置相应的 API 密钥（如 `SILICONFLOW_API_KEY`）。
+
+### 第三步：一键启动
+1. **双击运行根目录的 `【一键启动直播】.bat`**：
+   - 脚本将自动启动后台桥接中枢、静态 Web 服务，并以标准独立窗口打开竖屏直播间界面。
+2. **双击运行 `启动抖音弹幕抓手.bat`**：
+   - 开始实时捕获直播间的观众发言、进房、点赞与送礼数据。
+3. **（可选）双击运行 `【一键设置音频监听】.bat`**：
+   - 快速打开声音设置，将虚拟声卡侦听至耳机，让你能实时监听到直播间的全部声音。
+
+### 第四步：在【抖音直播伴侣】中推流
+1. 打开抖音直播伴侣，点击 **添加素材** -> 选择 **窗口**。
+2. 窗口列表中选中刚刚启动的 **奶娃AI直播窗口**。
+3. 素材画面分辨率设置为 **1080×1920**，即可完美贴合竖屏，开启高质量互动直播！
+
+---
+
+## 🔒 隐私与安全规范
+
+本项目在设计上做到了严格的**隐私与业务代码分离**：
+- **浏览器配置数据 (`edge_profile/`)**：包含用户本地 Cookie 及登录凭据，已在 `.gitignore` 中彻底屏蔽。
+- **本地直播间号 (`barrage_grab/config.json`)**：不入库，仅提供模板文件。
+- **API 密钥**：绝不硬编码在源码中，统一走环境变量读取。
+- **本地测试音视频**：大型测试录屏与临时视频帧均被排除，保持仓库纯净轻量。
+
+---
+
+## 📄 开源许可证
+
+本项目基于 MIT 协议开放。欢迎各位开发者提交 Issue 或 Pull Request，共同打造更加生动、智能的虚拟主播互动生态！
