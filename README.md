@@ -1,7 +1,10 @@
 ![](./assets/banner.jpg)
 
-<h1 align="center">Open-LLM-VTuber</h1>
+<h1 align="center">Open-LLM-VTuber (抖音拟真互动直播定制版)</h1>
 <h3 align="center">
+
+> 🚀 **[点击查看：抖音 AI 拟真互动直播间套件完整使用指南 (README_DOUYIN_LIVE.md)](./README_DOUYIN_LIVE.md)** 🚀
+
 
 [![GitHub release](https://img.shields.io/github/v/release/Open-LLM-VTuber/Open-LLM-VTuber)](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/releases) 
 [![license](https://img.shields.io/github/license/Open-LLM-VTuber/Open-LLM-VTuber)](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/blob/master/LICENSE) 

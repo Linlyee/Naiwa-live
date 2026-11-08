@@ -1,0 +1,4022 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>抖音AI互动直播间 - 小黄萌宝 60FPS 丝滑高精版</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    
+    :root {
+      --bg-dark: #0a1118;
+      --card-bg: rgba(16, 28, 42, 0.78);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-yellow: #ffd043;
+      --accent-gold: #ffb800;
+      --accent-pink: #ff6b8b;
+      --accent-blue: #4fa8ff;
+      --text-main: #ffffff;
+      --text-sub: #8ea1b8;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #060a0f;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      color: var(--text-main);
+      user-select: none;
+    }
+
+    /* 整个视口核心容器 (标准 1080x1920 竖屏设计基准，自动响应式等比居中，绝不切断两侧) */
+    #viewport-container {
+      width: 1080px;
+      height: 1920px;
+      min-width: 1080px;
+      min-height: 1920px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      transform-origin: center center;
+      background: url('assets/live_bg.jpg') center center / cover no-repeat, #0a1118;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+      will-change: transform;
+    }
+
+    /* GPU加速的丝滑DOM特效层 (取代卡顿的Canvas) */
+    #fx-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1080px;
+      height: 1920px;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 60;
+    }
+
+    /* 粒子通用GPU层 */
+    .fx-item {
+      position: absolute;
+      will-change: transform, opacity;
+      pointer-events: none;
+      font-family: "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+    }
+
+    /* 气泡专属柔和呼吸样式 */
+    .fx-bubble {
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.85) 0%, rgba(120, 210, 255, 0.45) 50%, rgba(80, 160, 255, 0.2) 100%);
+      border: 2px solid rgba(255, 255, 255, 0.75);
+      box-shadow: 0 0 15px rgba(120, 205, 255, 0.5);
+    }
+
+    /* 大锤下砸专属动效 */
+    .fx-hammer {
+      position: absolute;
+      top: 380px;
+      left: 450px;
+      font-size: 200px;
+      z-index: 70;
+      will-change: transform, opacity;
+      animation: hammerSmash 0.65s cubic-bezier(0.12, 0.8, 0.32, 1) forwards;
+    }
+
+    @keyframes hammerSmash {
+      0% { transform: translateY(-400px) rotate(-35deg) scale(1.3); opacity: 0; }
+      20% { opacity: 1; }
+      65% { transform: translateY(180px) rotate(15deg) scale(1.1); }
+      75% { transform: translateY(150px) rotate(0deg) scale(0.95); }
+      100% { transform: translateY(120px) rotate(-10deg) scale(0.8); opacity: 0; }
+    }
+
+    /* 震屏动画 */
+    .screen-shake {
+      animation: shakeAnim 0.35s ease-out;
+    }
+
+    @keyframes shakeAnim {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-12px, 14px); }
+      40% { transform: translate(12px, -10px); }
+      60% { transform: translate(-8px, 6px); }
+      80% { transform: translate(6px, -4px); }
+    }
+
+    /* 顶部音频分流极速一键切换药丸胶囊 */
+    .audio-quick-pill {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(14, 24, 38, 0.92);
+      border: 1.5px solid rgba(56, 239, 125, 0.65);
+      backdrop-filter: blur(12px);
+      color: #38ef7d;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 6px 20px;
+      border-radius: 24px;
+      cursor: pointer;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .audio-quick-pill:hover {
+      transform: translateX(-50%) scale(1.05);
+      box-shadow: 0 0 22px rgba(56, 239, 125, 0.5);
+    }
+    .audio-quick-pill.mode-test {
+      border-color: rgba(255, 208, 67, 0.75);
+      color: #ffd043;
+    }
+    .audio-quick-pill.mode-test:hover {
+      box-shadow: 0 0 22px rgba(255, 208, 67, 0.5);
+    }
+
+    /* 顶部数据看板卡片 */
+    .top-panel {
+      position: absolute;
+      top: 60px;
+      left: 75px;
+      right: 75px;
+      display: flex;
+      gap: 20px;
+      z-index: 20;
+    }
+
+    .data-card {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 24px 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-title {
+      font-size: 22px;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    .card-num {
+      font-size: 46px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      font-family: "DIN Alternate", -apple-system, sans-serif;
+      margin-top: 4px;
+    }
+
+    .card-num.gold { color: var(--accent-gold); text-shadow: 0 0 15px rgba(255, 184, 0, 0.3); }
+    .card-num.red { color: #ff5252; }
+    .card-num.white { color: #ffffff; }
+
+    .card-sub {
+      font-size: 20px;
+      color: var(--text-sub);
+      margin-top: 6px;
+    }
+
+    /* 心愿进度条卡片 */
+    .wish-box {
+      position: absolute;
+      top: 220px;
+      left: 75px;
+      right: 75px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      padding: 16px 26px;
+      z-index: 20;
+    }
+
+    .wish-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 22px;
+      color: var(--text-main);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 32%;
+      background: linear-gradient(90deg, #38ef7d, #11998e);
+      border-radius: 10px;
+      box-shadow: 0 0 12px rgba(56, 239, 125, 0.5);
+      transition: width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* 顶部居中免费口令条 */
+    .cmd-banner {
+      position: absolute;
+      top: 310px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      text-align: center;
+      background: rgba(16, 32, 48, 0.7);
+      border: 1px solid rgba(255, 208, 67, 0.25);
+      border-radius: 30px;
+      padding: 14px 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+      z-index: 20;
+    }
+
+    .cmd-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 1px;
+    }
+
+    .cmd-title span { color: var(--accent-yellow); }
+
+    .cmd-subtitle {
+      font-size: 20px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    /* 左右侧动作指令栏 (向内收拢至 105px 手机与直播伴侣超宽安全边距，彻底避免边缘裁剪) */
+    .action-side {
+      position: absolute;
+      top: 450px;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      z-index: 20;
+    }
+
+    .side-left { left: 105px; }
+    .side-right { right: 105px; }
+
+    .action-tag {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(18, 32, 48, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(10px);
+      padding: 8px 14px;
+      border-radius: 24px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s, border-color 0.2s;
+      cursor: pointer;
+    }
+
+    .action-tag:hover {
+      transform: scale(1.06);
+      border-color: var(--accent-yellow);
+    }
+
+    .action-icon-img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.6));
+      flex-shrink: 0;
+    }
+
+    .action-text {
+      font-size: 21px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    .coin-badge {
+      font-size: 13px;
+      font-weight: 700;
+      color: #38ef7d;
+      background: rgba(56, 239, 125, 0.16);
+      border: 1px solid rgba(56, 239, 125, 0.45);
+      border-radius: 12px;
+      padding: 1px 7px;
+      margin-left: 5px;
+      display: inline-block;
+      vertical-align: middle;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    .coin-badge.gold {
+      color: #ffd043;
+      background: rgba(255, 208, 67, 0.22);
+      border-color: rgba(255, 208, 67, 0.6);
+      box-shadow: 0 0 8px rgba(255, 208, 67, 0.3);
+    }
+
+    .action-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+        .coin-badge {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffd043;
+      background: rgba(255, 208, 67, 0.15);
+      border: 1px solid rgba(255, 208, 67, 0.35);
+      border-radius: 12px;
+      padding: 1px 7px;
+      margin-left: 6px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .coin-badge.gold {
+      color: #ffffff;
+      background: linear-gradient(135deg, #ff9800, #ff5722);
+      border: 1px solid #ffb74d;
+      box-shadow: 0 2px 10px rgba(255, 87, 34, 0.5);
+    }
+
+    .action-tag.special-glow {
+      background: linear-gradient(135deg, rgba(255, 184, 0, 0.25), rgba(255, 82, 82, 0.22));
+      border: 1.5px solid rgba(255, 208, 67, 0.85);
+      box-shadow: 0 0 20px rgba(255, 184, 0, 0.45);
+      animation: pulseGlow 2.5s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 10px rgba(255, 184, 0, 0.35); }
+      100% { box-shadow: 0 0 22px rgba(255, 184, 0, 0.7); }
+    }
+
+    .action-text {
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    /* =======================================================
+       核心舞台：60 FPS 分层骨骼与软体物理角色系统 (Rigging)
+       ======================================================= */
+    .stage-container {
+      position: absolute;
+      top: 470px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 720px;
+      height: 860px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      z-index: 10;
+    }
+
+    /* 脚底动态软阴影 */
+    .ground-shadow {
+      position: absolute;
+      bottom: 25px;
+      width: 400px;
+      height: 38px;
+      background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.65) 0%, rgba(0,0,0,0) 70%);
+      border-radius: 50%;
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
+    }
+
+    /* 角色整体装配体 */
+        /* 3D 原版高保真动作视频播放层 (视频同款抱肚子狂笑 · 透明通道 + 完美音画锁帧同步) */
+    .video-action-player {
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%) scale(1.0);
+      transform-origin: bottom center;
+      width: 480px;
+      height: 692px;
+      object-fit: contain;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.28s cubic-bezier(0.25, 1, 0.5, 1), transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 12;
+      filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.55));
+    }
+
+    .video-action-player.active {
+      opacity: 1;
+      transform: translateX(-50%) scale(1.16);
+    }
+
+    .character-rig {
+      position: absolute;
+      bottom: 35px;
+      width: 530px;
+      height: 710px;
+      transform-origin: bottom center;
+      filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.5));
+      transition: filter 0.3s ease;
+    }
+
+    /* 各图层叠加容器 */
+    .rig-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    /* 1. 身体图层 (无残存五官线) */
+    #layer-body {
+      z-index: 1;
+    }
+
+    /* 2. 眼睛图层 */
+    #layer-eyes {
+      z-index: 2;
+      transform-origin: 50% 38%;
+      transition: transform 0.12s ease-out;
+    }
+
+    /* 3. 嘴巴图层 */
+    #layer-mouth {
+      z-index: 3;
+      transform-origin: 50% 49%;
+      transition: transform 0.1s ease-out;
+    }
+
+    /* 4. 害羞红晕层 */
+    #layer-blush {
+      z-index: 4;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      transform-origin: 50% 43%;
+    }
+
+    /* ============ 60 FPS 自然动力学动画 ============ */
+
+    /* 待机常态：温和果冻呼吸浮动 */
+    .idle-breath {
+      animation: naturalBreathing 3.6s ease-in-out infinite;
+    }
+
+    @keyframes naturalBreathing {
+      0%, 100% { transform: translateY(0px) scale(1, 1); }
+      50% { transform: translateY(-10px) scale(0.985, 1.025); }
+    }
+
+    /* 自然眨眼动画 */
+    .eye-blinking {
+      animation: smoothBlink 4.2s infinite;
+    }
+
+    @keyframes smoothBlink {
+      0%, 94%, 98%, 100% { transform: scaleY(1); }
+      96% { transform: scaleY(0.06); }
+    }
+
+    /* 666 果冻高弹跳 */
+    .anim-boing {
+      animation: jellyJump 1.25s cubic-bezier(0.28, 0.84, 0.42, 1);
+    }
+
+    @keyframes jellyJump {
+      0% { transform: scale(1, 1) translateY(0); }
+      18% { transform: scale(1.28, 0.72) translateY(12px); }
+      45% { transform: scale(0.86, 1.22) translateY(-150px); }
+      70% { transform: scale(1.18, 0.82) translateY(0); }
+      85% { transform: scale(0.94, 1.06) translateY(-22px); }
+      93% { transform: scale(1.04, 0.96) translateY(0); }
+      100% { transform: scale(1, 1) translateY(0); }
+    }
+
+    /* 心动压扁 (Squish to Pancake) */
+    .anim-squish {
+      animation: squishElastic 2.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+
+    @keyframes squishElastic {
+      0% { transform: scale(1, 1) translateY(0); }
+      14% { transform: scale(1.58, 0.36) translateY(28px); }
+      55% { transform: scale(1.48, 0.42) translateY(24px); }
+      75% { transform: scale(0.85, 1.3) translateY(-40px); }
+      88% { transform: scale(1.1, 0.92) translateY(0); }
+      100% { transform: scale(1, 1) translateY(0); }
+    }
+
+    /* 贪吃过载：全身充气变大 */
+    .anim-bloat {
+      animation: bloatBalloon 2.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes bloatBalloon {
+      0% { transform: scale(1, 1); }
+      30% { transform: scale(1.36, 1.32) translateY(-20px); }
+      70% { transform: scale(1.28, 1.25) translateY(-14px); }
+      100% { transform: scale(1, 1); }
+    }
+
+    /* 摇摆扭扭舞 */
+    .anim-dance {
+      animation: hipDance 1.6s ease-in-out infinite;
+    }
+
+    @keyframes hipDance {
+      0%, 100% { transform: rotate(0deg) scale(1, 1); }
+      25% { transform: rotate(-9deg) scale(1.06, 0.94) skewX(-6deg); }
+      75% { transform: rotate(9deg) scale(1.06, 0.94) skewX(6deg); }
+    }
+
+    /* 惊吓发抖 */
+    .anim-shiver {
+      animation: highFreqShiver 0.8s ease-in-out;
+    }
+
+    @keyframes highFreqShiver {
+      0%, 100% { transform: translate(0, 0); }
+      10%, 30%, 50%, 70%, 90% { transform: translate(-10px, -4px); }
+      20%, 40%, 60%, 80% { transform: translate(10px, 4px); }
+    }
+
+    /* 奶龙变大抱腹大笑 (八级大笑专属 · 0.5s 充气膨胀至 1.45 倍 -> 3.0s 高频剧烈抽颤抖肚皮 -> 0.7s 呼气平复回弹缩小至原样) */
+    .anim-belly-laugh {
+      animation: bellyLaughExpand 4.2s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    }
+
+    @keyframes bellyLaughExpand {
+      0% {
+        transform: scale(1, 1) translateY(0);
+      }
+      /* 0.0s - 0.5s (0% - 12%): 充气果冻膨胀至 1.45 倍，身形横向扩展，凸显大肚皮 */
+      8% {
+        transform: scale(1.48, 1.35) translateY(-25px);
+      }
+      12% {
+        transform: scale(1.45, 1.42) translateY(-15px);
+      }
+      /* 12% - 84% (0.5s - 3.5s): 抱肚子大狂笑高频剧烈抽颤抖肚皮 (12Hz 纵向横向拉伸抖动) */
+      16% { transform: scale(1.42, 1.46) translateY(-18px) rotate(-2.5deg); }
+      20% { transform: scale(1.48, 1.38) translateY(-10px) rotate(2.5deg); }
+      24% { transform: scale(1.41, 1.47) translateY(-20px) rotate(-2deg); }
+      28% { transform: scale(1.49, 1.37) translateY(-8px) rotate(2deg); }
+      32% { transform: scale(1.42, 1.46) translateY(-19px) rotate(-2.5deg); }
+      36% { transform: scale(1.48, 1.38) translateY(-10px) rotate(2.5deg); }
+      40% { transform: scale(1.41, 1.47) translateY(-20px) rotate(-2deg); }
+      44% { transform: scale(1.49, 1.37) translateY(-8px) rotate(2deg); }
+      48% { transform: scale(1.42, 1.46) translateY(-19px) rotate(-2.5deg); }
+      52% { transform: scale(1.48, 1.38) translateY(-10px) rotate(2.5deg); }
+      56% { transform: scale(1.41, 1.47) translateY(-20px) rotate(-2deg); }
+      60% { transform: scale(1.49, 1.37) translateY(-8px) rotate(2deg); }
+      64% { transform: scale(1.42, 1.46) translateY(-19px) rotate(-2.5deg); }
+      68% { transform: scale(1.48, 1.38) translateY(-10px) rotate(2.5deg); }
+      72% { transform: scale(1.41, 1.47) translateY(-20px) rotate(-2deg); }
+      76% { transform: scale(1.47, 1.39) translateY(-12px) rotate(1.5deg); }
+      80% { transform: scale(1.43, 1.44) translateY(-16px) rotate(-1.5deg); }
+      84% { transform: scale(1.45, 1.41) translateY(-10px) rotate(0deg); }
+      /* 84% - 100% (3.5s - 4.2s): 长舒一口气，平滑吸气缩小复原 */
+      92% {
+        transform: scale(0.94, 1.05) translateY(-5px);
+      }
+      97% {
+        transform: scale(1.03, 0.97) translateY(0);
+      }
+      100% {
+        transform: scale(1, 1) translateY(0);
+      }
+    }
+
+    /* 膨胀时地影同步扩大，落地重量感十足 */
+    .shadow-belly-laugh {
+      animation: shadowBellyExpand 9.2s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    }
+    @keyframes shadowBellyExpand {
+      0%, 100% { transform: scale(1); opacity: 0.25; }
+      5%, 90% { transform: scale(1.45); opacity: 0.55; }
+      12%, 84% { transform: scale(1.45); opacity: 0.45; }
+    }
+
+    /* 心跳小鹿乱撞 (小心心专属 · 节奏胸口律动膨胀) */
+    .anim-heartbeat {
+      animation: heartbeatPulse 1.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards !important;
+    }
+    @keyframes heartbeatPulse {
+      0%, 100% { transform: scale(1, 1); }
+      14% { transform: scale(1.18, 0.92) translateY(6px); }
+      28% { transform: scale(0.94, 1.08) translateY(-16px); }
+      42% { transform: scale(1.14, 0.93) translateY(4px); }
+      56% { transform: scale(0.97, 1.03) translateY(-6px); }
+      70% { transform: scale(1.05, 0.96) translateY(2px); }
+      85% { transform: scale(1, 1); }
+    }
+
+    /* 浪漫飞吻深情鞠躬 (玫瑰专属 · 前倾鞠躬后探头送吻) */
+    .anim-kiss {
+      animation: kissBow 2.4s cubic-bezier(0.34, 1.3, 0.64, 1) forwards !important;
+    }
+    @keyframes kissBow {
+      0% { transform: scale(1, 1) rotate(0deg) translateY(0); }
+      20% { transform: scale(1.08, 0.92) rotate(-9deg) translateY(20px); }
+      45% { transform: scale(0.95, 1.08) rotate(7deg) translateY(-26px); }
+      70% { transform: scale(1.04, 0.96) rotate(-2deg) translateY(-8px); }
+      85% { transform: scale(0.98, 1.02) rotate(1deg) translateY(0); }
+      100% { transform: scale(1, 1) rotate(0deg) translateY(0); }
+    }
+
+    /* 微醺晃荡与饱嗝 (大啤酒专属 · 软糖醉酒晃动后大嗝) */
+    .anim-drunk {
+      animation: drunkWobble 2.6s ease-in-out forwards !important;
+    }
+    @keyframes drunkWobble {
+      0% { transform: scale(1, 1) rotate(0deg); }
+      15% { transform: scale(1.06, 0.94) rotate(-14deg) translateY(12px); }
+      30% { transform: scale(0.94, 1.06) rotate(14deg) translateY(-8px); }
+      45% { transform: scale(1.1, 0.9) rotate(-10deg) translateY(10px); }
+      60% { transform: scale(0.96, 1.04) rotate(8deg) translateY(-4px); }
+      75% { transform: scale(1.24, 0.8) rotate(0deg) translateY(26px); }
+      85% { transform: scale(0.9, 1.16) translateY(-32px); }
+      100% { transform: scale(1, 1) rotate(0deg) translateY(0); }
+    }
+
+    /* 超能爱心光波大发射 (手势比心专属 · 蓄力猛烈冲击) */
+    .anim-heart-beam {
+      animation: heartBeamRecoil 2.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards !important;
+    }
+    @keyframes heartBeamRecoil {
+      0% { transform: scale(1, 1) translateY(0); }
+      15% { transform: scale(0.86, 1.16) translateY(-22px); }
+      30% { transform: scale(1.38, 0.76) translateY(38px); }
+      50% { transform: scale(0.92, 1.12) translateY(-18px); }
+      70% { transform: scale(1.08, 0.94) translateY(6px); }
+      100% { transform: scale(1, 1) translateY(0); }
+    }
+
+    /* 活力应援高呼 (人气票专属 · 连续小跳步挥臂) */
+    .anim-cheer {
+      animation: cheerJumps 2.2s ease-in-out forwards !important;
+    }
+    @keyframes cheerJumps {
+      0%, 100% { transform: scale(1, 1) translateY(0) rotate(0deg); }
+      15% { transform: scale(0.9, 1.18) translateY(-75px) rotate(-6deg); }
+      30% { transform: scale(1.15, 0.88) translateY(0) rotate(4deg); }
+      45% { transform: scale(0.92, 1.14) translateY(-60px) rotate(-4deg); }
+      60% { transform: scale(1.1, 0.92) translateY(0) rotate(2deg); }
+      75% { transform: scale(0.96, 1.06) translateY(-25px) rotate(0deg); }
+    }
+
+    /* 彩虹气球悬浮漂浮动效 */
+    .anim-float {
+      animation: balloonFloat 2.6s ease-in-out forwards !important;
+    }
+    @keyframes balloonFloat {
+      0% { transform: scale(1, 1) translateY(0); }
+      25% { transform: scale(0.96, 1.04) translateY(-90px) rotate(-3deg); }
+      50% { transform: scale(1.02, 0.98) translateY(-120px) rotate(3deg); }
+      75% { transform: scale(0.98, 1.02) translateY(-70px) rotate(-2deg); }
+      100% { transform: scale(1, 1) translateY(0); }
+    }
+
+    /* 辣条哈气弹跳 */
+    .anim-spicy {
+      animation: spicyHop 2.4s ease-in-out forwards !important;
+    }
+    @keyframes spicyHop {
+      0%, 100% { transform: scale(1, 1) translateY(0); }
+      15%, 45%, 75% { transform: scale(0.92, 1.1) translateY(-60px) rotate(-4deg); }
+      30%, 60%, 90% { transform: scale(1.08, 0.92) translateY(5px) rotate(4deg); }
+    }
+
+    /* 睡觉呼呼气泡 */
+    .sleep-bubble {
+      position: absolute;
+      top: 90px;
+      right: 110px;
+      font-size: 44px;
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.9);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 30;
+      display: none;
+    }
+    .sleep-bubble.active {
+      display: block;
+      animation: zzzDrift 2.4s ease-in infinite;
+    }
+
+    @keyframes zzzDrift {
+      0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+      40% { opacity: 0.95; }
+      100% { transform: translate(45px, -95px) scale(1.25); opacity: 0; }
+    }
+
+    /* 台词气泡框 */
+    .speech-box {
+      position: absolute;
+      top: 1180px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 880px;
+      min-height: 85px;
+      background: rgba(12, 24, 38, 0.88);
+      border: 1px solid rgba(255, 208, 67, 0.35);
+      backdrop-filter: blur(16px);
+      border-radius: 26px;
+      padding: 16px 28px;
+      text-align: center;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55);
+      z-index: 25;
+    }
+
+    .speech-speaker {
+      font-size: 20px;
+      color: var(--accent-yellow);
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .speech-text {
+      font-size: 30px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.38;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    /* 点歌台看板 (独立排布在台词气泡与弹幕之间，绝不遮挡左右礼物与互动) */
+    .music-bar {
+      position: absolute;
+      top: 1350px;
+      left: 75px;
+      right: 75px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      border-radius: 20px;
+      padding: 10px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 22;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .music-info { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+    .music-disc {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #2a3b4c 30%, #16222f 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      animation: spinDisc 5s linear infinite;
+      box-shadow: 0 0 15px rgba(79, 168, 255, 0.3);
+      flex-shrink: 0;
+    }
+
+    @keyframes spinDisc {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .music-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .music-title {
+      font-size: 23px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+    .music-requester {
+      font-size: 17px;
+      color: #ffd043;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .music-queue {
+      font-size: 17px;
+      color: var(--text-sub);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 底部滚动弹幕区 (避开抖音手机底部输入栏，保持75px安全边距) */
+    .danmaku-box {
+      position: absolute;
+      top: 1445px;
+      left: 75px;
+      width: 590px;
+      height: 275px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .danmaku-header {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .danmaku-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .danmaku-msg {
+      background: rgba(16, 28, 42, 0.75);
+      backdrop-filter: blur(8px);
+      border-radius: 14px;
+      padding: 8px 16px;
+      font-size: 22px;
+      line-height: 1.35;
+      animation: slideUpFade 0.28s ease-out;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    @keyframes slideUpFade {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .user-name { color: var(--accent-blue); font-weight: 600; margin-right: 6px; }
+    .gift-badge { color: var(--accent-gold); font-weight: 700; }
+
+    /* 点歌规则与VIP插队清晰指引 */
+    .music-tip {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      text-align: right;
+      white-space: nowrap;
+      margin-left: 16px;
+      flex-shrink: 0;
+    }
+    .tip-rule {
+      font-size: 15px;
+      color: #ffd043;
+      font-weight: 800;
+      background: rgba(255, 208, 67, 0.12);
+      padding: 2px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 208, 67, 0.25);
+    }
+    .tip-vip {
+      font-size: 14px;
+      color: #38ef7d;
+      font-weight: 700;
+      background: rgba(56, 239, 125, 0.12);
+      padding: 2px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(56, 239, 125, 0.25);
+    }
+
+    /* 导演调试控制台 */
+    .director-fab {
+      position: fixed;
+      bottom: 8px;
+      right: 12px;
+      background: linear-gradient(135deg, #ffd043, #ff9000);
+      color: #000;
+      font-weight: 800;
+      font-size: 15px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4);
+      cursor: pointer;
+      z-index: 999;
+      border: none;
+      opacity: 0.85;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .director-fab:hover { opacity: 1; }
+
+    .director-fab:hover { transform: scale(1.08); }
+
+    .director-panel {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 440px;
+      background: rgba(14, 22, 32, 0.96);
+      border: 1px solid rgba(255, 208, 67, 0.35);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 24px;
+      z-index: 1000;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.85);
+      display: none;
+    }
+
+    .director-panel.active { display: block; }
+    .panel-title { font-size: 22px; font-weight: 700; color: var(--accent-yellow); margin-bottom: 16px; }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .ctrl-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ctrl-btn:hover { background: rgba(255, 208, 67, 0.25); border-color: var(--accent-yellow); color: var(--accent-yellow); }
+    .ctrl-btn.special { background: linear-gradient(135deg, #ff416c, #ff4b2b); border: none; }
+    .panel-status { font-size: 14px; color: var(--text-sub); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; }
+  
+    
+
+    /* 榜一投喂官专属展位 */
+    .vip-supporter-badge {
+      position: absolute;
+      top: 170px;
+      right: 75px;
+      background: linear-gradient(90deg, rgba(255, 184, 0, 0.25), rgba(255, 107, 139, 0.25));
+      border: 1px solid rgba(255, 208, 67, 0.45);
+      border-radius: 20px;
+      padding: 6px 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 15px rgba(255, 184, 0, 0.2);
+      z-index: 22;
+    }
+    .crown-icon { font-size: 20px; }
+    .vip-name { color: var(--accent-yellow); font-weight: 800; }
+    .vip-bowls { color: #38ef7d; font-weight: 800; }
+
+    /* 大礼物专属横幅跑道 (Gift Toast Banner) · 黄金中央走廊设计 */
+    #gift-toast-container {
+      position: absolute;
+      top: 418px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: auto;
+      max-width: 530px;
+      pointer-events: none;
+      z-index: 55;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .gift-toast {
+      background: linear-gradient(135deg, rgba(255, 107, 139, 0.95), rgba(255, 184, 0, 0.96));
+      border: 2px solid #ffffff;
+      border-radius: 28px;
+      padding: 8px 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 25px rgba(255, 107, 139, 0.55), 0 0 20px rgba(255, 208, 67, 0.75);
+      animation: toastPop 3.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      transform-origin: center;
+      white-space: nowrap;
+    }
+
+    @keyframes toastPop {
+      0% { transform: translateY(-15px) scale(0.9); opacity: 0; }
+      14% { transform: translateY(0) scale(1.03); opacity: 1; }
+      20% { transform: translateY(0) scale(1); opacity: 1; }
+      85% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-20px) scale(0.95); opacity: 0; }
+    }
+
+    .toast-avatar { font-size: 28px; }
+    .toast-text { font-size: 21px; font-weight: 800; color: #ffffff; text-shadow: 0 2px 6px rgba(0,0,0,0.45); }
+    .toast-gold { color: #fff37a; text-shadow: 0 0 10px rgba(255, 240, 0, 0.9); font-weight: 900; }
+
+    /* 实体白饭小饭碗挂件 */
+    .rice-bowl-widget {
+      position: absolute;
+      bottom: 25px;
+      right: 15px;
+      width: 130px;
+      height: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 8;
+      pointer-events: none;
+      transition: transform 0.35s ease, opacity 0.35s ease;
+    }
+
+    /* 大动作时自动避让淡出饭碗，彻底消除穿模 */
+    .stage-container.action-active .rice-bowl-widget {
+      opacity: 0;
+      transform: scale(0.7) translateX(30px);
+    }
+
+    .rice-steam {
+      display: flex;
+      gap: 12px;
+      height: 35px;
+      align-items: flex-end;
+    }
+
+    .steam-wisp {
+      width: 6px;
+      height: 25px;
+      background: linear-gradient(to top, rgba(255,255,255,0.7), rgba(255,255,255,0));
+      border-radius: 50% 50% 0 0;
+      animation: steamRise 1.8s ease-out infinite;
+    }
+    .steam-wisp:nth-child(2) { animation-delay: 0.6s; height: 32px; }
+    .steam-wisp:nth-child(3) { animation-delay: 1.2s; height: 22px; }
+
+    @keyframes steamRise {
+      0% { transform: translateY(0) scaleX(1); opacity: 0; }
+      40% { opacity: 0.8; }
+      100% { transform: translateY(-28px) scaleX(2.2); opacity: 0; }
+    }
+
+    .rice-bowl-body {
+      width: 110px;
+      height: 60px;
+      background: radial-gradient(circle at 50% 20%, #ffffff 0%, #d4e7f8 55%, #8cb9df 100%);
+      border-radius: 0 0 60px 60px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 -6px 12px rgba(45, 90, 140, 0.3);
+      position: relative;
+      overflow: visible;
+    }
+
+    .rice-mound {
+      position: absolute;
+      top: -24px;
+      left: 10px;
+      right: 10px;
+      height: 38px;
+      background: radial-gradient(ellipse at 50% 70%, #ffffff 40%, #e6f0fa 80%, #c8deee 100%);
+      border-radius: 50% 50% 30% 30%;
+      box-shadow: inset 0 -2px 6px rgba(0,0,0,0.1), 0 0 8px rgba(255,255,255,0.6);
+      transform-origin: bottom center;
+      transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .rice-label {
+      margin-top: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent-yellow);
+      background: rgba(10, 20, 32, 0.82);
+      border: 1px solid rgba(255, 208, 67, 0.35);
+      border-radius: 10px;
+      padding: 2px 10px;
+      white-space: nowrap;
+    }
+
+    /* 语音声波律动条 */
+    .audio-equalizer {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 20px;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+
+    .eq-bar {
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to top, #38ef7d, #ffd043);
+      border-radius: 2px;
+      transform-origin: bottom;
+      transform: scaleY(0.2);
+      transition: transform 0.12s;
+    }
+
+    .audio-equalizer.active .eq-bar:nth-child(1) { animation: eqJump 0.4s ease-in-out infinite alternate; }
+    .audio-equalizer.active .eq-bar:nth-child(2) { animation: eqJump 0.32s ease-in-out infinite 0.1s alternate; }
+    .audio-equalizer.active .eq-bar:nth-child(3) { animation: eqJump 0.45s ease-in-out infinite 0.2s alternate; }
+    .audio-equalizer.active .eq-bar:nth-child(4) { animation: eqJump 0.28s ease-in-out infinite 0.05s alternate; }
+    .audio-equalizer.active .eq-bar:nth-child(5) { animation: eqJump 0.38s ease-in-out infinite 0.15s alternate; }
+
+    @keyframes eqJump {
+      0% { transform: scaleY(0.2); }
+      100% { transform: scaleY(1); }
+    }
+
+    /* 观众进场欢迎微光浮条 */
+    .welcome-toast {
+      position: absolute;
+      bottom: 505px;
+      left: 50px;
+      background: rgba(20, 35, 52, 0.88);
+      border: 1px solid rgba(79, 168, 255, 0.4);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 8px 18px;
+      font-size: 20px;
+      color: #e0f0ff;
+      z-index: 21;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: opacity 0.4s, transform 0.4s;
+      pointer-events: none;
+    }
+    .welcome-toast.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .welcome-user {
+      color: var(--accent-yellow);
+      font-weight: 700;
+    }
+
+    /* 点歌微型进度条 */
+    .music-progress-container {
+      width: 180px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .music-progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #4fa8ff, #ffd043);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    /* 全屏氛围滤镜与光效层 */
+    .atmosphere-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 18;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .atmosphere-overlay.drunk-mode {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 60%, rgba(255, 180, 0, 0.15) 0%, rgba(255, 120, 0, 0.42) 85%);
+      animation: drunkVignettePulse 2s infinite ease-in-out;
+    }
+    @keyframes drunkVignettePulse {
+      0%, 100% { filter: blur(0px); opacity: 0.85; }
+      50% { filter: blur(2px); opacity: 0.95; }
+    }
+    .atmosphere-overlay.love-mode {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 105, 180, 0.25) 0%, rgba(255, 20, 147, 0.38) 90%);
+      animation: lovePulse 1.8s ease-in-out;
+    }
+    @keyframes lovePulse {
+      0% { opacity: 0; transform: scale(0.9); }
+      30% { opacity: 0.9; transform: scale(1.05); }
+      100% { opacity: 0; transform: scale(1.2); }
+    }
+    .atmosphere-overlay.gold-vip-mode {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 30%, rgba(255, 215, 0, 0.35) 0%, rgba(255, 140, 0, 0.12) 60%, transparent 80%);
+      animation: goldVipGlow 2.5s ease-in-out;
+    }
+    @keyframes goldVipGlow {
+      0% { opacity: 0; }
+      40% { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+
+
+    /* ============ 动态专属道具层 (10大礼物真实可视道具动作) ============ */
+    .action-props {
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 530px;
+      height: 710px;
+      pointer-events: none;
+      z-index: 15;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* 1. 小心心专属：巨型3D搏动爱心 */
+    .prop-heart-beat {
+      position: absolute;
+      top: 42%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: heartBeatingPop 1.8s ease-in-out infinite;
+    }
+    .giant-heart-glow {
+      font-size: 110px;
+      filter: drop-shadow(0 0 25px rgba(255, 60, 120, 0.95)) drop-shadow(0 0 50px rgba(255, 105, 180, 0.8));
+      animation: heartScalePump 0.65s ease-in-out infinite alternate;
+    }
+    @keyframes heartScalePump {
+      0% { transform: scale(0.9); }
+      100% { transform: scale(1.28); }
+    }
+    .heart-caption {
+      margin-top: 10px;
+      background: linear-gradient(135deg, #ff2d55, #ff6b81);
+      color: #fff;
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 22px;
+      font-weight: 800;
+      box-shadow: 0 4px 15px rgba(255, 45, 85, 0.6);
+      border: 2px solid #fff;
+      animation: popBadge 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+
+    /* 2. 抖音专属：DJ耳机与跳动双音符 */
+    .prop-douyin {
+      position: absolute;
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 460px;
+      height: 380px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .prop-headphones {
+      position: absolute;
+      top: 10px;
+      font-size: 130px;
+      filter: drop-shadow(0 0 25px #00f2fe) drop-shadow(0 0 35px #4facfe);
+      animation: headphoneBounce 0.6s ease-in-out infinite alternate;
+    }
+    @keyframes headphoneBounce {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(-15px) scale(1.08); }
+    }
+    .bounce-note {
+      position: absolute;
+      font-size: 75px;
+      filter: drop-shadow(0 0 15px #ffd043);
+    }
+    .note-left {
+      left: 15px;
+      top: 70px;
+      animation: noteFloatL 1.2s ease-in-out infinite alternate;
+    }
+    .note-right {
+      right: 15px;
+      top: 80px;
+      animation: noteFloatR 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes noteFloatL {
+      0% { transform: translateY(0) rotate(-15deg); }
+      100% { transform: translateY(-35px) rotate(10deg); }
+    }
+    @keyframes noteFloatR {
+      0% { transform: translateY(0) rotate(15deg); }
+      100% { transform: translateY(-35px) rotate(-10deg); }
+    }
+
+    /* 3. 玫瑰专属：99朵抱怀红玫瑰与甜蜜飞吻唇印 */
+    .prop-rose {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .prop-bouquet {
+      font-size: 135px;
+      filter: drop-shadow(0 10px 25px rgba(255, 0, 80, 0.6));
+      animation: bouquetSway 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes bouquetSway {
+      0% { transform: rotate(-5deg) scale(0.96); }
+      100% { transform: rotate(5deg) scale(1.06); }
+    }
+    .prop-kiss-fly {
+      position: absolute;
+      top: -120px;
+      font-size: 85px;
+      filter: drop-shadow(0 0 20px #ff2d55);
+      animation: kissFloatOut 1.8s ease-out infinite;
+    }
+    @keyframes kissFloatOut {
+      0% { transform: scale(0.4) translateY(20px); opacity: 0; }
+      35% { transform: scale(1.3) translateY(-30px); opacity: 1; }
+      100% { transform: scale(1.8) translateY(-110px); opacity: 0; }
+    }
+    .rose-caption {
+      margin-top: -15px;
+      background: linear-gradient(135deg, #e91e63, #ff4081);
+      color: #fff;
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 22px;
+      font-weight: 800;
+      border: 2px solid #fff;
+      box-shadow: 0 4px 15px rgba(233, 30, 99, 0.6);
+    }
+
+    /* 4. 人气票专属：应援双荧光棒与人气TOP1金牌 */
+    .prop-cheer {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .lightstick {
+      position: absolute;
+      font-size: 85px;
+      filter: drop-shadow(0 0 20px #ffd043);
+    }
+    .stick-l {
+      left: 10px;
+      animation: stickWaveL 0.5s ease-in-out infinite alternate;
+    }
+    .stick-r {
+      right: 10px;
+      animation: stickWaveR 0.5s ease-in-out infinite alternate;
+    }
+    @keyframes stickWaveL {
+      0% { transform: rotate(-35deg) translateY(0); }
+      100% { transform: rotate(10deg) translateY(-25px); }
+    }
+    @keyframes stickWaveR {
+      0% { transform: rotate(35deg) translateY(0); }
+      100% { transform: rotate(-10deg) translateY(-25px); }
+    }
+    .cheer-badge {
+      margin-top: 15px;
+      background: linear-gradient(135deg, #ff9800, #ff5722);
+      color: #fff;
+      padding: 8px 24px;
+      border-radius: 24px;
+      font-size: 24px;
+      font-weight: 900;
+      border: 2px solid #ffd043;
+      box-shadow: 0 6px 20px rgba(255, 152, 0, 0.6);
+      animation: cheerBadgeBounce 0.7s infinite alternate;
+    }
+    @keyframes cheerBadgeBounce {
+      0% { transform: scale(0.95); }
+      100% { transform: scale(1.08); }
+    }
+
+    /* 5. 大啤酒专属：倾倒倒酒大扎啤杯与爆笑打嗝气泡 */
+    .prop-beer {
+      position: absolute;
+      bottom: 240px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .beer-glass-container {
+      position: relative;
+      animation: beerTiltChug 1.4s ease-in-out infinite alternate;
+    }
+    .beer-glass {
+      font-size: 130px;
+      filter: drop-shadow(0 10px 25px rgba(255, 180, 0, 0.7));
+    }
+    @keyframes beerTiltChug {
+      0% { transform: rotate(0deg) scale(0.95); }
+      50% { transform: rotate(-38deg) translateY(-18px) scale(1.15); }
+      100% { transform: rotate(-48deg) translateY(-25px) scale(1.22); }
+    }
+    .burp-comic-badge {
+      position: absolute;
+      top: -110px;
+      background: linear-gradient(135deg, #ffb300, #ff8f00);
+      color: #fff;
+      padding: 8px 26px;
+      border-radius: 25px;
+      font-size: 26px;
+      font-weight: 900;
+      border: 3px solid #fff;
+      box-shadow: 0 6px 25px rgba(255, 179, 0, 0.8);
+      animation: burpPop 0.8s cubic-bezier(0.18, 0.89, 0.32, 1.28) infinite alternate;
+    }
+    @keyframes burpPop {
+      0% { transform: scale(0.92) rotate(-4deg); }
+      100% { transform: scale(1.12) rotate(4deg); }
+    }
+
+    /* 6. 你最好看专属：单反闪光与100分颜值爆表横幅 */
+    .prop-haokan {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .camera-flash-fx {
+      font-size: 110px;
+      filter: drop-shadow(0 0 35px #fff) drop-shadow(0 0 65px #ff69b4);
+      animation: flashBlink 0.5s ease-in-out infinite alternate;
+    }
+    @keyframes flashBlink {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      100% { transform: scale(1.25); opacity: 1; }
+    }
+    .beauty-banner {
+      margin-top: 20px;
+      background: linear-gradient(135deg, #ff4081, #e040fb);
+      color: #fff;
+      padding: 8px 24px;
+      border-radius: 25px;
+      font-size: 24px;
+      font-weight: 900;
+      border: 2px solid #fff;
+      box-shadow: 0 6px 25px rgba(224, 64, 251, 0.6);
+      animation: popBadge 0.4s ease-out;
+    }
+
+    /* 7. 手势比心专属：双指尖比心与超能激光爱心光波 */
+    .prop-heart-beam {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .finger-hearts {
+      font-size: 105px;
+      filter: drop-shadow(0 0 30px #ff2d55);
+      animation: fingerPulse 0.45s ease-in-out infinite alternate;
+    }
+    @keyframes fingerPulse {
+      0% { transform: scale(0.92); }
+      100% { transform: scale(1.18); }
+    }
+    .beam-caption {
+      margin-top: 15px;
+      background: linear-gradient(135deg, #ff1744, #ff5252);
+      color: #fff;
+      padding: 8px 26px;
+      border-radius: 25px;
+      font-size: 24px;
+      font-weight: 900;
+      border: 2px solid #fff;
+      box-shadow: 0 0 30px rgba(255, 23, 68, 0.8);
+      animation: beamWave 0.6s infinite alternate;
+    }
+    @keyframes beamWave {
+      0% { transform: scale(0.95); box-shadow: 0 0 15px rgba(255,23,68,0.5); }
+      100% { transform: scale(1.12); box-shadow: 0 0 40px rgba(255,23,68,1); }
+    }
+
+    /* 8. 为你点亮专属：头顶悬浮璀璨皇冠与金色VIP横幅 */
+    .prop-vip-crown {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .royal-crown {
+      font-size: 125px;
+      filter: drop-shadow(0 0 25px #ffd700) drop-shadow(0 0 45px #ffaa00);
+      animation: crownFloatDescend 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes crownFloatDescend {
+      0% { transform: translateY(-15px) scale(0.94); }
+      100% { transform: translateY(10px) scale(1.08); }
+    }
+    .vip-banner-gold {
+      margin-top: 15px;
+      background: linear-gradient(135deg, #ffb300, #ff8f00);
+      color: #fff;
+      padding: 8px 24px;
+      border-radius: 25px;
+      font-size: 22px;
+      font-weight: 900;
+      border: 2px solid #ffe082;
+      box-shadow: 0 6px 30px rgba(255, 179, 0, 0.8);
+      white-space: nowrap;
+    }
+
+    /* 9. 甜甜圈专属：大口嗷呜咬飞入甜甜圈与咬痕贴纸 */
+    .prop-donut {
+      position: absolute;
+      top: 36%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .flying-donut {
+      font-size: 125px;
+      filter: drop-shadow(0 10px 25px rgba(120, 60, 20, 0.6));
+      animation: donutChompFly 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes donutChompFly {
+      0% { transform: translateY(15px) scale(0.9); }
+      100% { transform: translateY(-15px) scale(1.22); }
+    }
+    .chomp-sticker {
+      margin-top: 10px;
+      background: linear-gradient(135deg, #8d6e63, #d84315);
+      color: #fff;
+      padding: 8px 24px;
+      border-radius: 25px;
+      font-size: 24px;
+      font-weight: 900;
+      border: 2px solid #ffe0b2;
+      box-shadow: 0 6px 20px rgba(216, 67, 21, 0.6);
+      animation: popBadge 0.4s ease-out;
+    }
+
+    @keyframes popBadge {
+      0% { transform: scale(0.4); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+  </style>
+</head>
+<body>
+  <audio id="bgm-player" preload="auto"></audio>
+  <audio id="voice-player" preload="auto"></audio>
+  <audio id="sfx-player" preload="auto"></audio>
+
+  <!-- 视口受击震屏容器 -->
+  <div id="viewport-container">
+
+    <!-- 全屏氛围滤镜与光效层 -->
+    <div id="atmosphere-overlay" class="atmosphere-overlay"></div>
+
+    <!-- GPU加速的丝滑散落特效层 (取代容易卡顿的1080x1920 Canvas) -->
+    <div id="fx-container"></div>
+
+    <!-- 顶部音频分流极速一键切换药丸胶囊 (彻底告别复杂设置，一键直切) -->
+    <div class="audio-quick-pill" id="audio-quick-pill" onclick="toggleAudioQuickRoute()" title="点击一键切换：【测试扬声器试听】 / 【开播CABLE隔离】">
+      <span id="quick-pill-icon">🎙️</span>
+      <span id="quick-pill-text">开播独占分流 (CABLE隔离)</span>
+      <span style="font-size: 13px; opacity: 0.8; margin-left: 4px; text-decoration: underline;">[点此切换]</span>
+    </div>
+
+    <!-- 1. 顶部统计数据看板 (开播实时真实统计) -->
+    <div class="top-panel">
+      <div class="data-card">
+        <div class="card-title">今日收益 (元)</div>
+        <div class="card-num gold" id="val-income">¥ 0.00</div>
+        <div class="card-sub" id="val-bowls">0.0 碗白饭</div>
+      </div>
+      <div class="data-card">
+        <div class="card-title">今日消耗 Token</div>
+        <div class="card-num red" id="val-tokens">0</div>
+        <div class="card-sub" id="val-token-sub">AI 智能交互</div>
+      </div>
+      <div class="data-card">
+        <div class="card-title">白饭余额</div>
+        <div class="card-num white" id="val-balance">0.0 碗</div>
+        <div class="card-sub" id="wish-percent-card">心愿进度 0%</div>
+      </div>
+    </div>
+
+    <!-- 榜一投喂官专属展位 -->
+    <div class="vip-supporter-badge">
+      <span class="crown-icon">👑</span> 榜一投喂官：<span class="vip-name" id="vip-name">虚位以待</span> · 已投喂 <span class="vip-bowls" id="vip-bowls">0.0</span> 碗饭
+    </div>
+
+    <!-- 心愿喂饭进度条 -->
+    <div class="wish-box">
+      <div class="wish-header">
+        <span id="wish-text">🍚 今天的小愿望 · 吃饱 0.0 / 500 碗</span>
+        <span style="color: #38ef7d;" id="wish-percent">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="wish-progress" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- 2. 免费互动口令条 -->
+    <div class="cmd-banner">
+      <div class="cmd-title">免费互动：发送 <span>「蹦跳」</span> / <span>「吐泡泡」</span> / <span>「睡觉」</span></div>
+      <div class="cmd-subtitle">发弹幕即刻互动 · 送「棒棒糖」看奶娃变大抱肚狂笑！</div>
+    </div>
+
+    
+    <!-- 大礼物跑道浮层 (Gift Toast Banner) -->
+    <div id="gift-toast-container"></div>
+
+    <!-- 3. 左侧动作指南列表 (抖音官方热卖礼物 · 产生互动效果) -->
+    <div class="action-side side-left">
+      <div class="action-tag" onclick="triggerAction('blush')">
+        <img class="action-icon-img" src="assets/gifts/xindong.png" alt="小心心">
+        <span class="action-text">小心心 <span class="coin-badge">害羞脸红</span></span>
+      </div>
+      <div class="action-tag" onclick="triggerAction('dengpai')">
+        <img class="action-icon-img" src="assets/gifts/dengpai.png" alt="粉丝团灯牌">
+        <span class="action-text">灯牌 <span class="coin-badge">点亮爱心</span></span>
+      </div>
+      <div class="action-tag" onclick="triggerAction('rose')">
+        <img class="action-icon-img" src="assets/gifts/xianhua.png" alt="鲜花">
+        <span class="action-text">鲜花 <span class="coin-badge">飞吻夸夸</span></span>
+      </div>
+      <div class="action-tag special-glow" onclick="triggerAction('belly_laugh')" title="【核心王牌特技】送棒棒糖看奶娃变大抱肚狂笑">
+        <img class="action-icon-img" src="assets/gifts/bangbangtang.png" alt="棒棒糖">
+        <span class="action-text" style="color: #ffd043; font-weight: 800;">棒棒糖 <span class="coin-badge gold">抱肚子狂笑</span></span>
+      </div>
+    </div>
+
+    <!-- 4. 右侧动作指南列表 (抖音官方特色与大招特权礼物 · 产生互动效果) -->
+    <div class="action-side side-right">
+      <div class="action-tag" onclick="triggerAction('praise')">
+        <span class="action-text">荧光棒 <span class="coin-badge">欢呼跳跃</span></span>
+        <img class="action-icon-img" src="assets/gifts/yingguangbang.png" alt="荧光棒">
+      </div>
+      <div class="action-tag" onclick="triggerAction('mojing')">
+        <span class="action-text">墨镜 <span class="coin-badge gold">酷炫黑超</span></span>
+        <img class="action-icon-img" src="assets/gifts/mojing.png" alt="墨镜">
+      </div>
+      <div class="action-tag" onclick="triggerAction('vip_song')" title="送【比心】享受VIP极速插队点歌特权">
+        <span class="action-text">比心 <span class="coin-badge gold">VIP点歌</span></span>
+        <img class="action-icon-img" src="assets/gifts/bixin.png" alt="比心">
+      </div>
+      <div class="action-tag" onclick="triggerAction('balloon')" title="送【热气球】触发浪漫满屋全屏大招">
+        <span class="action-text">热气球 <span class="coin-badge gold">浪漫大招</span></span>
+        <img class="action-icon-img" src="assets/gifts/qiqiu.png" alt="热气球">
+      </div>
+    </div>
+
+    <!-- 5. 核心舞台：分层骨骼装配小黄人 (经过独立检验的0重叠结构) -->
+    <div class="stage-container">
+      <div class="ground-shadow" id="ground-shadow"></div>
+      <!-- 实体白饭小饭碗 (实时显示当前饱食度与飘起热气) -->
+      <div class="rice-bowl-widget" id="rice-bowl-widget">
+        <div class="rice-steam" id="rice-steam">
+          <div class="steam-wisp"></div>
+          <div class="steam-wisp"></div>
+          <div class="steam-wisp"></div>
+        </div>
+        <div class="rice-bowl-body">
+          <div class="rice-mound" id="rice-mound"></div>
+        </div>
+        <div class="rice-label" id="rice-label">🍚 白饭 150.9碗</div>
+      </div>
+
+
+            <!-- 3D 真实抱肚子狂笑动作视频层 (透明通道 + 原声锁帧同步) -->
+      <video id="video-action-player" class="video-action-player" playsinline preload="auto" src="assets/video/nailong_belly_laugh.webm"></video>
+      <div class="character-rig idle-breath" id="character-rig">
+        <!-- 身体本体 (干净无瑕疵底模) -->
+        <img id="layer-body" class="rig-layer" src="assets/rig/body_clean.png" alt="Body">
+        <!-- 动态眼部 (支持自然眨眼、表情切换，零重叠) -->
+        <img id="layer-eyes" class="rig-layer eye-blinking" src="assets/rig/pupils_default.png" alt="Eyes">
+        <!-- 动态口部 (实时张合，彻底去除多余横线) -->
+        <img id="layer-mouth" class="rig-layer" src="assets/rig/mouth_neutral.png" alt="Mouth">
+        <!-- 害羞红晕层 -->
+        <img id="layer-blush" class="rig-layer" src="assets/blush.png" alt="Blush">
+      </div>
+
+      <!-- 动态专属动作道具层 -->
+      <div id="action-props" class="action-props"></div>
+
+      <!-- 睡觉浮动气泡 -->
+      <div class="sleep-bubble" id="sleep-bubble">Zzz...</div>
+    </div>
+
+    <!-- 6. 角色说话悬浮台词气泡 -->
+    <div class="speech-box">
+      <div class="speech-speaker">
+        ✦ 软糖小主播 · 奶娃 ✦
+        <div class="audio-equalizer" id="audio-equalizer" title="声波律动">
+          <span class="eq-bar"></span>
+          <span class="eq-bar"></span>
+          <span class="eq-bar"></span>
+          <span class="eq-bar"></span>
+          <span class="eq-bar"></span>
+        </div>
+      </div>
+      <div class="speech-text" id="speech-text">咕噜咕噜……奶娃肚子里在打小鼓鼓，想吃香喷喷的甜甜饭饭啦～</div>
+    </div>
+
+    <div id="welcome-toast" class="welcome-toast">👋 欢迎 <span class="welcome-user">桃子汽水</span> 进入直播间~</div>
+    <!-- 7. 底部实时弹幕列表 (初始干净，实时接收真实弹幕) -->
+    <div class="danmaku-box">
+      <div class="danmaku-header">💬 实时弹幕互动</div>
+      <div class="danmaku-list" id="danmaku-list"></div>
+    </div>
+
+        <!-- 8. 底部点歌台 (清晰说明点歌需带“点歌”二字与VIP插队特权) -->
+    <div class="music-bar">
+      <div class="music-info">
+        <div class="music-disc">🎵</div>
+        <div style="min-width: 0; flex: 1;">
+          <div class="music-title-wrap">
+            <div class="music-title" id="music-title">♬ 点播台静音待机中 · 发「点歌 歌名」即可点歌</div>
+            <span class="music-requester" id="music-requester">[静音待机]</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; margin-top: 3px;">
+            <div class="music-progress-container"><div class="music-progress-fill" id="music-progress-fill"></div></div>
+            <div class="music-queue" id="music-queue">当前无排队 · 发「点歌 歌名」即可点歌</div>
+          </div>
+        </div>
+      </div>
+      <div class="music-tip" style="display: flex; align-items: center; gap: 8px;">
+        <span class="tip-rule">📢 点歌：发「点歌 歌名」</span>
+        <span class="tip-vip">⭐ 送「比心」VIP插队</span>
+        <a href="javascript:void(0)" onclick="openQQMusicModal()" style="background: linear-gradient(135deg, #10b981, #059669); border: 1px solid #34d399; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 13px; text-decoration: none; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(16,185,129,0.3);">👑 扫码登录QQ音乐VIP</a>
+      </div>
+    </div>
+
+  </div> <!-- /viewport-container -->
+
+  <!-- 9. 导演调试控制台 -->
+  <button class="director-fab" onclick="toggleDirectorPanel()">⚙️ 导演台</button>
+  <div class="director-panel" id="director-panel">
+    <div class="panel-title">🎬 直播间实时控制台</div>
+        <div class="btn-grid">
+      <button class="ctrl-btn" onclick="triggerAction('blush')">💖 小心心 · 害羞脸红</button>
+      <button class="ctrl-btn" onclick="triggerAction('dengpai')">🪧 粉丝团灯牌 · 点亮爱心</button>
+      <button class="ctrl-btn" onclick="triggerAction('rose')">💐 鲜花 · 飞吻夸夸</button>
+      <button class="ctrl-btn special" onclick="triggerAction('belly_laugh')">🍭 棒棒糖 · 抱肚狂笑 (王牌)</button>
+      <button class="ctrl-btn" onclick="triggerAction('praise')">✨ 荧光棒 · 欢呼跳跃</button>
+      <button class="ctrl-btn" onclick="triggerAction('mojing')">🕶️ 墨镜 · 酷炫黑超</button>
+      <button class="ctrl-btn special" onclick="triggerAction('vip_song')">🫰 比心 · VIP点歌特权</button>
+      <button class="ctrl-btn special" onclick="triggerAction('balloon')">🎈 热气球 · 浪漫大招</button>
+      <button class="ctrl-btn" onclick="triggerAction('boing')">🦘 口令「蹦跳」</button>
+      <button class="ctrl-btn" onclick="triggerAction('bubbles')">🫧 口令「吐泡泡」</button>
+      <button class="ctrl-btn" onclick="triggerAction('sleep')">😴 口令「睡觉」</button>
+      <button class="ctrl-btn" onclick="testTalking()">🗣️ 说话嘴型</button>
+      <button class="ctrl-btn special" id="btn-warmup-toggle" style="background: rgba(255, 255, 255, 0.15); color: #fff; grid-column: span 2;" onclick="toggleAutoWarmup()">🤖 仅响应真实直播弹幕 (虚拟暖场已关闭)</button>
+      <button class="ctrl-btn" onclick="mockDanmaku()">💬 随机弹幕</button>
+      <button class="ctrl-btn special" id="btn-play-toggle" onclick="toggleBgmPlay()">🎵 播/暂停BGM</button>
+      <button class="ctrl-btn" onclick="skipSong()">⏭️ 下一首</button>
+      <button class="ctrl-btn special" id="btn-qqmusic-login" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 700; grid-column: span 2;" onclick="openQQMusicModal()">👑 🎵 扫码登录 QQ 音乐 VIP (激活专属点歌母带库)</button>
+      <button class="ctrl-btn special" style="background: linear-gradient(135deg, #ef4444, #991b1b); color: #fff; grid-column: span 2;" onclick="resetLiveStats()">🔄 开播数据一键清零 (重新起算)</button>
+      <div style="grid-column: span 2; background: rgba(0,0,0,0.35); padding: 8px 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-top: 4px; border: 1px solid rgba(255,208,67,0.3);">
+        <span style="font-size: 14px; color: #ffd043; font-weight: 700;">🔍 手机安全区防裁剪:</span>
+        <div style="display: flex; gap: 6px;">
+          <button class="ctrl-btn" style="padding: 4px 8px; font-size: 13px;" onclick="setSafeScale(1.0)">100%</button>
+          <button class="ctrl-btn" style="padding: 4px 8px; font-size: 13px;" onclick="setSafeScale(0.95)">95%</button>
+          <button class="ctrl-btn" style="padding: 4px 8px; font-size: 13px;" onclick="setSafeScale(0.90)">90%</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 12px; margin-bottom: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+      <div style="display: flex; justify-content: space-between; font-size: 15px; color: #ffd043; margin-bottom: 6px;">
+        <span>🔊 BGM 音量调节</span>
+        <span id="vol-text">35%</span>
+      </div>
+      <input type="range" id="bgm-vol" min="0" max="100" value="35" style="width: 100%; cursor: pointer;" oninput="setBgmVolume(this.value)">
+    </div>
+    <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+      <input type="text" id="request-input" placeholder="输入歌名 (如: 朋友的酒)" style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 14px;" onkeydown="if(event.key==='Enter') testRequestSong()">
+      <button class="ctrl-btn" style="padding: 8px 14px; font-size: 14px;" onclick="testRequestSong()">🎤 点歌</button>
+    </div>
+    <div style="margin-top: 10px; margin-bottom: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+      <div style="font-size: 14px; color: #38ef7d; font-weight: 700; margin-bottom: 6px;">💬 实时弹幕评论测试 (直接呼唤 AI 奶娃回复)</div>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="danmaku-test-input" placeholder="输入对奶娃说的话 (如: 奶娃你今天吃饱饭了吗？)" style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(56,239,125,0.4); border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 14px;" onkeydown="if(event.key==='Enter') sendTestDanmaku()">
+        <button class="ctrl-btn" style="padding: 8px 14px; font-size: 14px; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; border: none; font-weight: 700;" onclick="sendTestDanmaku()">🚀 发送</button>
+      </div>
+    </div>
+        <div style="margin-top: 10px; margin-bottom: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+      <div style="display: flex; justify-content: space-between; font-size: 15px; color: #38ef7d; margin-bottom: 6px;">
+        <span>🗣️ 奶娃语音音量</span>
+        <span id="voice-vol-text">100%</span>
+      </div>
+      <input type="range" id="voice-vol" min="0" max="100" value="100" style="width: 100%; cursor: pointer;" oninput="setVoiceVolume(this.value)">
+    </div>
+
+    <!-- 音频独立分流与隔离控制 (保证主播正常使用电脑，游戏/视频/语音绝不进直播间) -->
+    <div style="background: rgba(16, 28, 44, 0.95); padding: 12px 14px; border-radius: 14px; margin-top: 8px; margin-bottom: 12px; border: 1px solid rgba(56, 239, 125, 0.45); box-shadow: 0 4px 18px rgba(0,0,0,0.4);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 15px; color: #38ef7d; font-weight: 700;">🎛️ 音频分流与硬件隔离中心:</span>
+        <span id="audio-mode-badge" style="font-size: 12px; background: rgba(56,239,125,0.2); color: #38ef7d; padding: 2px 8px; border-radius: 10px; font-weight: 700;">检测中...</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+        <button class="ctrl-btn" id="btn-audio-default" style="padding: 7px 10px; font-size: 13px;" onclick="switchAudioRoute('default')">🎧 本地测试模式 (电脑扬声器)</button>
+        <button class="ctrl-btn special" id="btn-audio-cable" style="padding: 7px 10px; font-size: 13px; background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 700;" onclick="switchAudioRoute('cable')">🎙️ 直播独占分流 (CABLE隔离)</button>
+      </div>
+      <div style="margin-top: 6px; margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 4px;">
+          <span>🎯 声卡输出设备直接绑定:</span>
+          <a href="javascript:void(0)" onclick="refreshAudioDevices(true)" style="color: #38ef7d; text-decoration: none;">🔄 刷新/授权声卡</a>
+        </div>
+        <select id="audio-device-select" style="width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(56,239,125,0.4); border-radius: 8px; padding: 6px 10px; color: #fff; font-size: 13px;" onchange="onSelectAudioDevice(this.value)">
+          <option value="">正在枚举声卡设备...</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <button class="ctrl-btn" style="flex: 1; padding: 6px 10px; font-size: 13px; background: rgba(255, 208, 67, 0.2); color: #ffd043; border: 1px solid rgba(255, 208, 67, 0.4);" onclick="playAudioTestSound()">🔊 播放测试音 (叮咚~ 验证此声卡)</button>
+      </div>
+      <div id="audio-route-status" style="font-size: 12px; color: #cbd5e1; margin-top: 8px; line-height: 1.45; background: rgba(0,0,0,0.25); padding: 6px 10px; border-radius: 8px;">
+        当前流向: 正在自动初始化...
+      </div>
+    </div>
+
+    <div class="panel-status" id="ws-status">WebSocket: 正在连接本地 Open-LLM-VTuber...</div>
+  </div>
+
+  <!-- ============ 核心分层控制与丝滑粒子系统脚本 ============ -->
+  <script>
+    window.pendingVipUsers = {};
+    const viewport = document.getElementById('viewport-container');
+    const sfxPlayer = document.getElementById('sfx-player');
+    const atmosphereOverlay = document.getElementById('atmosphere-overlay');
+    let sfxVolume = 1.0;
+    if (sfxPlayer) sfxPlayer.volume = sfxVolume;
+
+    // 智能自适应窗口等比缩放 + 手机端安全区缩放调节 (防止不同手机屏幕或直播伴侣画面裁剪边缘)
+    let currentSafeScale = 1.0;
+    try {
+      const savedScale = localStorage.getItem('douyin_safe_scale');
+      if (savedScale) currentSafeScale = parseFloat(savedScale);
+    } catch(e) {}
+
+    function updateViewportTransform() {
+      if (!viewport) return;
+      const targetW = 1080;
+      const targetH = 1920;
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const fitScale = Math.min(winW / targetW, winH / targetH);
+      const finalScale = fitScale * currentSafeScale;
+      viewport.style.transform = `translate(-50%, -50%) scale(${finalScale})`;
+    }
+
+    function setSafeScale(scale) {
+      currentSafeScale = scale;
+      updateViewportTransform();
+      try {
+        localStorage.setItem('douyin_safe_scale', scale);
+      } catch(e) {}
+    }
+
+    window.addEventListener('resize', updateViewportTransform);
+    window.addEventListener('DOMContentLoaded', updateViewportTransform);
+    setTimeout(updateViewportTransform, 50);
+
+    // =======================================================
+    // 全自动音频分流与声卡独立隔离引擎 (setSinkId + 动态授权)
+    // =======================================================
+    let currentAudioRoute = localStorage.getItem('douyin_audio_route') || 'cable';
+    let availableOutputs = [];
+
+    async function ensureAudioDeviceAccess() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+      let devs = await navigator.mediaDevices.enumerateDevices();
+      let outputs = devs.filter(d => d.kind === 'audiooutput');
+      const isMasked = outputs.every(o => !o.label || o.label.trim() === '');
+      if (isMasked && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(t => t.stop());
+          devs = await navigator.mediaDevices.enumerateDevices();
+          outputs = devs.filter(d => d.kind === 'audiooutput');
+        } catch (e) {
+          console.warn('getUserMedia audio permission prompt/error:', e);
+        }
+      }
+      return outputs;
+    }
+
+    async function populateAudioDropdown(outputs, selectedId) {
+      const select = document.getElementById('audio-device-select');
+      if (!select) return;
+      select.innerHTML = '';
+      if (!outputs || outputs.length === 0) {
+        select.innerHTML = '<option value="">⚠️ 未找到可用输出声卡 (请先点击刷新授权)</option>';
+        return;
+      }
+      outputs.forEach(dev => {
+        const opt = document.createElement('option');
+        opt.value = dev.deviceId;
+        let label = dev.label || `音频输出设备 (${dev.deviceId.slice(0, 8)})`;
+        if (label.includes('CABLE Input') || (label.includes('CABLE') && !label.includes('16ch'))) {
+          label = `🎙️ ${label} [推荐: 直播独占隔离]`;
+        } else if (label.includes('Realtek') || label.includes('扬声器')) {
+          label = `🎧 ${label} [推荐: 本地试听]`;
+        }
+        opt.innerText = label;
+        if (dev.deviceId === selectedId || (selectedId === '' && dev.deviceId === 'default')) {
+          opt.selected = true;
+        }
+        select.appendChild(opt);
+      });
+    }
+
+    async function setAllPlayersSinkId(sinkId, sinkLabel) {
+      const audioElements = [
+        document.getElementById('voice-player'),
+        document.getElementById('bgm-player'),
+        document.getElementById('sfx-player'),
+        document.getElementById('video-action-player')
+      ];
+      for (const el of audioElements) {
+        if (el && typeof el.setSinkId === 'function') {
+          try {
+            await el.setSinkId(sinkId);
+          } catch(e) {
+            console.warn('setSinkId failed for element:', el.id, e);
+          }
+        }
+      }
+    }
+
+    async function refreshAudioDevices(forceUserPrompt = false) {
+      const status = document.getElementById('audio-route-status');
+      if (status) status.innerText = '正在检测与枚举系统声卡...';
+      if (forceUserPrompt && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+          s.getTracks().forEach(t => t.stop());
+        } catch(e) {}
+      }
+      availableOutputs = await ensureAudioDeviceAccess();
+      await applyAudioRouting(currentAudioRoute);
+    }
+
+    async function onSelectAudioDevice(deviceId) {
+      const dev = availableOutputs.find(d => d.deviceId === deviceId);
+      const label = dev ? dev.label : '自选声卡';
+      await setAllPlayersSinkId(deviceId, label);
+      const status = document.getElementById('audio-route-status');
+      if (status) {
+        status.innerHTML = `<span style="color: #38ef7d; font-weight: 700;">✅ 已切换输出声卡至: ${label}</span><br>测试音与直播音乐都将从该声卡播出。`;
+      }
+    }
+
+    // 播放测试音：通过 Web Audio API 生成一段清脆的“叮咚~”和弦
+    function playAudioTestSound() {
+      try {
+        const sfx = document.getElementById('sfx-player');
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (sfx && typeof ctx.setSinkId === 'function' && sfx.sinkId) {
+          ctx.setSinkId(sfx.sinkId).catch(()=>{});
+        }
+        const now = ctx.currentTime;
+        const freqs = [523.25, 659.25, 783.99, 1046.50];
+        freqs.forEach((f, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, now + idx * 0.08);
+          gain.gain.setValueAtTime(0, now + idx * 0.08);
+          gain.gain.linearRampToValueAtTime(0.25, now + idx * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 0.5);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.55);
+        });
+        const status = document.getElementById('audio-route-status');
+        if (status) {
+          status.innerHTML += `<br><span style="color: #ffd043;">🔔 正在播放测试音 (叮咚~)...</span>`;
+        }
+      } catch(err) {
+        console.warn('playAudioTestSound error:', err);
+      }
+    }
+
+    async function applyAudioRouting(mode = currentAudioRoute) {
+      currentAudioRoute = mode;
+      localStorage.setItem('douyin_audio_route', mode);
+      const badge = document.getElementById('audio-mode-badge');
+      const status = document.getElementById('audio-route-status');
+      const btnDefault = document.getElementById('btn-audio-default');
+      const btnCable = document.getElementById('btn-audio-cable');
+
+      if (availableOutputs.length === 0) {
+        availableOutputs = await ensureAudioDeviceAccess();
+      }
+
+      if (mode === 'cable') {
+        let cableDev = availableOutputs.find(d => d.label.includes('CABLE Input') && !d.label.includes('16ch'));
+        if (!cableDev) {
+          cableDev = availableOutputs.find(d => d.label.includes('CABLE') && !d.label.includes('16ch'));
+        }
+        if (cableDev) {
+          await setAllPlayersSinkId(cableDev.deviceId, cableDev.label);
+          populateAudioDropdown(availableOutputs, cableDev.deviceId);
+          if (badge) {
+            badge.innerText = '🎙️ 直播独占分流';
+            badge.style.color = '#38ef7d';
+            badge.style.background = 'rgba(56, 239, 125, 0.2)';
+          }
+          if (status) {
+            status.innerHTML = `<span style="color: #38ef7d; font-weight: 700;">✅ 直播声音已独立输出至: ${cableDev.label}</span><br>🟢 硬件隔离生效：电脑看视频、打游戏、微信语音使用系统默认扬声器，绝不流入直播间！`;
+          }
+          if (btnCable) {
+            btnCable.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            btnCable.style.boxShadow = '0 0 12px rgba(16, 185, 129, 0.6)';
+          }
+          if (btnDefault) {
+            btnDefault.style.background = 'rgba(255, 255, 255, 0.1)';
+            btnDefault.style.boxShadow = 'none';
+          }
+          const qPill = document.getElementById('audio-quick-pill');
+          if (qPill) {
+            qPill.className = 'audio-quick-pill';
+            const icon = document.getElementById('quick-pill-icon');
+            const text = document.getElementById('quick-pill-text');
+            if (icon) icon.innerText = '🎙️';
+            if (text) text.innerText = '开播独占分流 (CABLE隔离)';
+          }
+          return;
+        } else {
+          if (status) {
+            status.innerHTML = `<span style="color: #ef4444; font-weight: 700;">⚠️ 未能自动获取 CABLE 声卡名称 (浏览器安全限制)</span><br><a href="javascript:void(0)" onclick="refreshAudioDevices(true)" style="color: #38ef7d; font-weight: bold; text-decoration: underline;">👉 点此授权声卡识别</a>，完成后即可独占分流。`;
+          }
+        }
+      }
+
+      // 默认模式 (测试/扬声器)
+      await setAllPlayersSinkId('', '默认扬声器');
+      populateAudioDropdown(availableOutputs, 'default');
+      if (badge) {
+        badge.innerText = '🎧 本地测试模式';
+        badge.style.color = '#ffd043';
+        badge.style.background = 'rgba(255, 208, 67, 0.2)';
+      }
+      if (status) {
+        status.innerHTML = `<span style="color: #ffd043; font-weight: 700;">🔈 声音已流向电脑默认扬声器/耳机</span><br>适合本地调试与测试聆听。`;
+      }
+      if (btnDefault) {
+        btnDefault.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+        btnDefault.style.boxShadow = '0 0 12px rgba(245, 158, 11, 0.6)';
+      }
+      if (btnCable) {
+        btnCable.style.background = 'rgba(255, 255, 255, 0.1)';
+        btnCable.style.boxShadow = 'none';
+      }
+      const qPill = document.getElementById('audio-quick-pill');
+      if (qPill) {
+        qPill.className = 'audio-quick-pill mode-test';
+        const icon = document.getElementById('quick-pill-icon');
+        const text = document.getElementById('quick-pill-text');
+        if (icon) icon.innerText = '🎧';
+        if (text) text.innerText = '本地测试试听 (扬声器/耳机)';
+      }
+    }
+
+    function switchAudioRoute(mode) {
+      applyAudioRouting(mode);
+    }
+
+    function toggleAudioQuickRoute() {
+      const nextMode = (currentAudioRoute === 'cable') ? 'default' : 'cable';
+      applyAudioRouting(nextMode);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => refreshAudioDevices(false), 200);
+    });
+    document.addEventListener('click', () => {
+      refreshAudioDevices(false);
+    }, { once: true });
+
+    // 专属拟声音效播放器 (独立多声道，绝不抢占语音或BGM)
+    function playSFX(sfxPath) {
+      unlockAudioContext();
+      if (!sfxPlayer) return;
+      try {
+        sfxPlayer.pause();
+        sfxPlayer.currentTime = 0;
+      } catch(e) {}
+      sfxPlayer.src = sfxPath;
+      sfxPlayer.play().catch(err => {
+        console.warn("SFX play auto-blocked:", err);
+      });
+    }
+
+    // 全屏沉浸氛围调节器
+    function setAtmosphere(mode, duration = 2400) {
+      if (!atmosphereOverlay) return;
+      atmosphereOverlay.className = `atmosphere-overlay ${mode}`;
+      setTimeout(() => {
+        if (atmosphereOverlay && atmosphereOverlay.className.includes(mode)) {
+          atmosphereOverlay.className = 'atmosphere-overlay';
+        }
+      }, duration);
+    }
+    const rig = document.getElementById('character-rig');
+    const layerEyes = document.getElementById('layer-eyes');
+    const layerMouth = document.getElementById('layer-mouth');
+    const layerBlush = document.getElementById('layer-blush');
+    const sleepBubble = document.getElementById('sleep-bubble');
+    const speechText = document.getElementById('speech-text');
+    const danmakuList = document.getElementById('danmaku-list');
+    const fxContainer = document.getElementById('fx-container');
+
+    // 已通过实际复合测试完全确认无误的分层素材
+    const RIG_ASSETS = {
+      eyes: {
+        default: 'assets/rig/pupils_default.png',
+        happy: 'assets/rig/eyes_happy.png',
+        dizzy: 'assets/rig/eyes_dizzy.png',
+        star: 'assets/rig/eyes_star.png',
+        heart: 'assets/rig/eyes_heart.png'
+      },
+      mouth: {
+        neutral: 'assets/rig/mouth_neutral.png',
+        open: 'assets/rig/mouth_open.png',
+        o: 'assets/rig/mouth_o.png',
+        wavy: 'assets/rig/mouth_wavy.png'
+      }
+    };
+
+    // 100% 跟之前一模一样的官方原版原声音频切片（纯净无损 · 零AI合成失真 · 10大礼物各不相同绝不重复）
+    const ACTION_VOICES = {
+      intro: 'assets/voice/intro.mp3',       // “我是奶龙！” (官方原声)
+      blush: 'assets/voice/blush.mp3',       // “哼，小熊！” (官方原声)
+      boing: 'assets/voice/boing.mp3',       // “耶，帅的代名词就是我耶，胜利了！” (官方原声)
+      rose: 'assets/voice/squish.mp3',       // “哼，你们给我等着！” (官方原声)
+      praise: 'assets/voice/bubbles.mp3',   // “胜利了！” (官方原声)
+      pijiu: 'assets/voice/bloat.mp3',       // “我的大肚肚真的很酷酷！” (官方原声)
+      haokan: 'assets/voice/dance.mp3',     // “耶，帅的代名词就是我耶！” (官方原声)
+      hearts: 'assets/voice/shiver.mp3',     // “你以为我会怕你吗？我根本不害怕的！” (官方原声)
+      vip: 'assets/voice/intro.mp3',         // “我是奶龙！” (官方原声，加冕专属)
+      donut: 'assets/voice/hungry.mp3',     // “求求你了，我想要好多好吃的！” (官方原声)
+      lollipop: 'assets/voice/gold.mp3',     // “奶龙经典魔性八级狂笑 (哈哈哈哈哈哈)” (官方原声)
+      song_regular: 'assets/voice/song.mp3', // “耶，帅的代名词就是我耶！” (官方原声)
+      song_auto: 'assets/voice/intro.mp3',   // “我是奶龙！” (官方原声)
+      // 兼容历史原版切片别名
+      dance: 'assets/voice/dance.mp3',
+      bubbles: 'assets/voice/bubbles.mp3',
+      bloat: 'assets/voice/bloat.mp3',
+      revive: 'assets/voice/intro.mp3',
+      hungry: 'assets/voice/hungry.mp3',
+      song: 'assets/voice/song.mp3',
+      gold: 'assets/voice/gold.mp3',
+      sleep: 'assets/voice/sleep.mp3',
+      squish: 'assets/voice/squish.mp3'
+    };
+
+
+    let isTalking = false;
+    let talkInterval = null;
+    let currentActionTimeout = null;
+
+    // 震屏反馈
+    function triggerScreenShake() {
+      viewport.classList.remove('screen-shake');
+      void viewport.offsetWidth; // 触发重绘
+      viewport.classList.add('screen-shake');
+      setTimeout(() => viewport.classList.remove('screen-shake'), 400);
+    }
+
+    // 设置眼睛状态
+    function setEyes(type) {
+      layerEyes.src = RIG_ASSETS.eyes[type] || RIG_ASSETS.eyes.default;
+      if (type === 'default') {
+        layerEyes.className = 'rig-layer eye-blinking';
+      } else {
+        layerEyes.className = 'rig-layer';
+      }
+    }
+
+    // 设置嘴巴状态
+    function setMouth(type) {
+      layerMouth.src = RIG_ASSETS.mouth[type] || RIG_ASSETS.mouth.neutral;
+    }
+
+    // 重置为待机状态
+    function resetToIdle() {
+      const stage = document.querySelector('.stage-container');
+      if (stage) stage.classList.remove('action-active');
+
+      // 停止并淡出 3D 专属动作视频
+      const actionVideo = document.getElementById('video-action-player');
+      if (actionVideo) {
+        actionVideo.classList.remove('active');
+        setTimeout(() => {
+          try {
+            actionVideo.pause();
+            actionVideo.currentTime = 0;
+          } catch(e) {}
+        }, 350);
+      }
+
+      // 恢复 2D 待机骨骼显示，彻底避免两层重叠
+      rig.style.display = 'block';
+      rig.style.transition = 'opacity 0.35s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+      rig.style.opacity = '1';
+      rig.style.transform = 'scale(1, 1)';
+      rig.className = 'character-rig idle-breath';
+
+      const groundShadow = document.getElementById('ground-shadow');
+      if (groundShadow) groundShadow.className = 'ground-shadow';
+      setEyes('default');
+      if (!isTalking) setMouth('neutral');
+      layerBlush.style.opacity = '0';
+      sleepBubble.classList.remove('active');
+      const actionPropsEl = document.getElementById('action-props');
+      if (actionPropsEl) actionPropsEl.innerHTML = '';
+      if (atmosphereOverlay) atmosphereOverlay.className = 'atmosphere-overlay';
+      const eq = document.getElementById('audio-equalizer');
+      if (eq) eq.classList.remove('active');
+    }
+
+    // 动作与特效触发调度 (全面升级：10大官方礼物专属定制心意、拟声音效、专属动作道具与独一无二台词)
+    function triggerAction(action, user = '热心老铁', fromGiftEvent = false) {
+      if (isTalking) stopTalking();
+      if (currentActionTimeout) clearTimeout(currentActionTimeout);
+      if (sleepBubble) sleepBubble.classList.remove('active');
+      if (atmosphereOverlay) atmosphereOverlay.className = 'atmosphere-overlay';
+
+      const actionPropsEl = document.getElementById('action-props');
+      if (actionPropsEl) actionPropsEl.innerHTML = '';
+
+      // 切换动作时保证之前大笑视频安全停止
+      const runningVideo = document.getElementById('video-action-player');
+      if (runningVideo && action !== 'belly_laugh') {
+        runningVideo.classList.remove('active');
+        try { runningVideo.pause(); } catch(e) {}
+        rig.style.opacity = '1';
+        rig.style.transform = '';
+      }
+
+      switch(action) {
+        // -------------------------------------------------------------
+        // 1. 小心心 (1抖币 · 原汁原味傲娇害羞原声 · 3D搏动心跳道具 · 砰砰心跳声)
+        // -------------------------------------------------------------
+        case 'blush':
+          playSFX('assets/sfx/heartbeat.wav');
+          if (actionPropsEl) {
+            actionPropsEl.innerHTML = `
+              <div class="prop-heart-beat">
+                <div class="giant-heart-glow">💖</div>
+                <div class="heart-caption">心跳小鹿乱撞 💓</div>
+              </div>
+            `;
+          }
+          playNaiwaAudio(ACTION_VOICES.blush, `哇！谢谢【${user}】送的小心心，奶娃心里扑通扑通跳个不停呢！`, true);
+          rig.className = 'character-rig anim-heartbeat';
+          setEyes('happy');
+          setMouth('open');
+          layerBlush.style.opacity = '1';
+          setAtmosphere('love-mode', 2200);
+          spawnGPUParticles('💖', 35);
+          spawnGPUParticles('💕', 15);
+          if (!fromGiftEvent) {
+            feedRice(0.2);
+            showGiftToast(user, '小心心', 0.2, '💖');
+          }
+          currentActionTimeout = setTimeout(resetToIdle, 2800);
+          break;
+
+        // -------------------------------------------------------------
+        // 2. 抖音 (1抖币 · 原汁原味胜利活力原声 · DJ耳机跳动音符道具 · 欢快礼花声)
+        // -------------------------------------------------------------
+        case 'boing':
+          playSFX('assets/sfx/confetti.wav');
+          if (actionPropsEl) {
+            actionPropsEl.innerHTML = `
+              <div class="prop-douyin">
+                <div class="prop-headphones">🎧</div>
+                <div class="bounce-note note-left">🎵</div>
+                <div class="bounce-note note-right">🎶</div>
+              </div>
+            `;
+          }
+          playNaiwaAudio(ACTION_VOICES.boing, `收到【${user}】的抖音专属音符啦！跟着动感节奏，和奶娃一起开心地摇摆起来吧！`, true);
+          rig.className = 'character-rig anim-boing';
+          setEyes('happy');
+          setMouth('open');
+          spawnGPUParticles('🎵', 30);
+          spawnGPUParticles('✨', 25);
+          if (!fromGiftEvent) {
+            feedRice(0.2);
+            showGiftToast(user, '抖音', 0.2, '🎵');
+          }
+          currentActionTimeout = setTimeout(resetToIdle, 2400);
+          break;
+
+        // -------------------------------------------------------------
+        // 3. 玫瑰 (1抖币 · 原汁原味浪漫天籁原声 · 99朵红玫瑰捧花与飞吻道具 · 啵唧飞吻声)
+        // -------------------------------------------------------------
+        // 2. 粉丝团灯牌 (1抖币 · 皇冠头饰 · 加入粉丝团)
+        // -------------------------------------------------------------
+        case 'dengpai':
+          playSFX('assets/sfx/crown_shimmer.wav');
+          if (actionPropsEl) {
+            actionPropsEl.innerHTML = `
+              <div class="prop-vip-crown">
+                <div class="royal-crown">👑</div>
+                <div class="vip-banner-gold">✨ 感谢点亮粉丝团灯牌 ✨</div>
+              </div>
+            `;
+          }
+          playNaiwaAudio(ACTION_VOICES.intro, `哇！超级开心！感谢【${user}】点亮粉丝团灯牌，加入奶娃的糖果守护团啦！么么哒！`, true);
+          rig.className = 'character-rig anim-float';
+          setEyes('star');
+          setMouth('open');
+          layerBlush.style.opacity = '1';
+          setAtmosphere('gold-vip-mode', 2400);
+          spawnGPUParticles('👑', 25);
+          spawnGPUParticles('✨', 30);
+          spawnGPUParticles('💖', 20);
+          if (!fromGiftEvent) {
+            feedRice(0.2);
+            showGiftToast(user, '粉丝团灯牌', 0.2, '👑');
+          }
+          currentActionTimeout = setTimeout(resetToIdle, 2800);
+          break;
+
+        // -------------------------------------------------------------
+        // 3. 鲜花 / 玫瑰 (10抖币 / 1抖币 · 鲜花浪漫花雨飞吻)
+        // -------------------------------------------------------------
+        case 'rose':
+          playSFX('assets/sfx/kiss.wav');
+          if (actionPropsEl) {
+            actionPropsEl.innerHTML = `
+              <div class="prop-rose">
+                <div class="prop-bouquet">💐🌹</div>
+                <div class="prop-kiss-fly">💋</div>
+                <div class="rose-caption">深情飞吻 鲜花烂漫 💐</div>
+              </div>
+            `;
+          }
+          playNaiwaAudio(ACTION_VOICES.rose, `哇！好香美丽的鲜花！送给【${user}】一个超级甜蜜的大飞吻哦！`, true);
+          rig.className = 'character-rig anim-kiss';
+          setEyes('happy');
+          setMouth('o');
+          layerBlush.style.opacity = '0.9';
+          setTimeout(() => setMouth('open'), 700);
+          setAtmosphere('love-mode', 2500);
+          spawnGPUParticles('🌹', 35);
+          spawnGPUParticles('💐', 20);
+          spawnGPUParticles('💖', 20);
+          if (!fromGiftEvent) {
+            feedRice(2.0);
+            showGiftToast(user, '鲜花', 2.0, '💐');
+          }
+          currentActionTimeout = setTimeout(resetToIdle, 2800);
+          break;
+
+        // -------------------------------------------------------------
+        // 4. 荧光棒 (9抖币 · 派对打call · 欢呼跳动)
+        // -------------------------------------------------------------
+        case 'praise':
+          playSFX('assets/sfx/confetti.wav');
+          if (actionPropsEl) {
+            actionPropsEl.innerHTML = `
+              <div class="prop-cheer">
+                <div class="lightstick stick-l">✨🪄</div>
+                <div class="lightstick stick-r">🪄✨</div>
+                <div class="cheer-badge">🏆 荧光棒打CALL 冲榜一 🏆</div>
+              </div>
+            `;
+          }
+          playNaiwaAudio(ACTION_VOICES.praise, `荧光棒摇起来！感谢【${user}】疯狂打CALL，奶娃冲鸭冲榜一！`, true);
+          rig.className = 'character-rig anim-cheer';
+          setEyes('star');
+          setMouth('open');
+          spawnGPUParticles('✨', 35);
+          spawnGPUParticles('🎉', 25);
+          spawnGPUParticles('🎵', 20);
+          if (!fromGiftEvent) {
+            feedRice(1.8);
+            showGiftToast(user, '荧光棒', 1.8, '✨');
+          }
+          currentActionTimeout = setTimeout(resetToIdle, 2500);
+          break;
+
+        // -------------------------------------------------------------
+        // 5. 墨镜 (99抖币 · 酷炫黑超 · 社会摇摆)
+        // -------------------------------------------------------------
+        case 'mojing':
+        case 'haokan':
+          playSFX('assets/sfx/sparkle_camera.wav');
+          if (actionPropsEl) {
+            actionPropsEl.innerHTML = `
+              <div class="prop-haokan">
+                <div class="camera-flash-fx">🕶️</div>
+                <div class="beauty-banner">🔥 全场最靓的崽 · 社会奶娃 🔥</div>
+              </div>
+            `;
+          }
+          playNaiwaAudio(ACTION_VOICES.boing, `酷炫墨镜戴起来！谢谢【${user}】大哥！全场最靓、最帅气的崽就是我啦，冲鸭！`, true);
+          rig.className = 'character-rig anim-dance';
+          setEyes('star');
+          setMouth('open');
+          setAtmosphere('drunk-mode', 2800);
+          spawnGPUParticles('🕶️', 25);
+          spawnGPUParticles('🔥', 25);
+          spawnGPUParticles('✨', 35);
+          if (!fromGiftEvent) {
+            feedRice(19.8);
+            showGiftToast(user, '墨镜', 19.8, '🕶️');
+          }
+          currentActionTimeout = setTimeout(resetToIdle, 3000);
+          break;
+
+        // -------------------------------------------------------------
+        // 6. 比心 (199抖币 · VIP极速霸权插队点歌)
+        // -------------------------------------------------------------
+        case 'vip_song':
+        case 'hearts':
+          playSFX('assets/sfx/crown_shimmer.wav');
+          if (actionPropsEl) {
+            actionPropsEl.innerHTML = `
+              <div class="prop-vip-crown">
+                <div class="royal-crown">👑</div>
+                <div class="vip-banner-gold">👑 VIP极速霸权插队点歌已激活 👑</div>
+              </div>
+            `;
+          }
+          playNaiwaAudio(ACTION_VOICES.vip, `哇！收到【${user}】的大比心！VIP极速通道已开启，发歌名立刻为你插队播放～`, true);
+          rig.className = 'character-rig anim-heart-beam';
+          setEyes('star');
+          setMouth('open');
+          layerBlush.style.opacity = '1';
+          setAtmosphere('gold-vip-mode', 3200);
+          spawnGPUParticles('⭐', 35);
+          spawnGPUParticles('👑', 20);
+          spawnGPUParticles('💖', 30);
+          if (!fromGiftEvent) {
+            const sampleVipSongs = ['爱如火 (极乐净土版)', '狂暴奶龙摇', '朋友的酒', '勇气大爆发', '月声尽，心灯明'];
+            const randomSong = sampleVipSongs[Math.floor(Math.random() * sampleVipSongs.length)];
+            feedRice(39.8);
+            handleSongRequest(randomSong, user, true);
+          }
+          currentActionTimeout = setTimeout(resetToIdle, 3200);
+          break;
+
+        // -------------------------------------------------------------
+        // 7. 热气球 (520抖币 · 浪漫大招 · 全屏金色特效)
+        // -------------------------------------------------------------
+        case 'balloon':
+          playSFX('assets/sfx/crown_shimmer.wav');
+          if (actionPropsEl) {
+            actionPropsEl.innerHTML = `
+              <div class="prop-heart-beam">
+                <div class="finger-hearts">🎈🏰🎈</div>
+                <div class="beam-caption">💖 520 浪漫热气球起飞！守护榜一 💖</div>
+              </div>
+            `;
+          }
+          playNaiwaAudio(ACTION_VOICES.vip, `天呐！浪漫大热气球升空啦！感恩【${user}】大老板的超级守护！奶娃爱死你啦！`, true);
+          rig.className = 'character-rig anim-float';
+          setEyes('heart');
+          setMouth('open');
+          triggerScreenShake();
+          setAtmosphere('gold-vip-mode', 4000);
+          spawnGPUParticles('🎈', 40);
+          spawnGPUParticles('💖', 35);
+          spawnGPUParticles('🎉', 30);
+          spawnGPUParticles('🎆', 25);
+          if (!fromGiftEvent) {
+            feedRice(104.0);
+            showGiftToast(user, '热气球', 104.0, '🎈');
+          }
+          currentActionTimeout = setTimeout(resetToIdle, 4000);
+          break;
+
+        // -------------------------------------------------------------
+        // 10. 棒棒糖 (9抖币 · 3D视频真实抱肚子狂笑锁帧原声 · 结束后亲切答谢)
+        // -------------------------------------------------------------
+        case 'belly_laugh':
+        case 'laugh':
+        case 'gold':
+          const stageEl = document.querySelector('.stage-container');
+          if (stageEl) stageEl.classList.add('action-active');
+
+          if (!fromGiftEvent) {
+            feedRice(1.8);
+            showGiftToast(user, '棒棒糖', 1.8, '🍭');
+          }
+          setSpeech(`哈哈哈哈！哎呀妈呀！【${user}】的棒棒糖太逗了！肚子笑抽筋啦！哈哈哈哈哈哈！`);
+
+          const actionVideo = document.getElementById('video-action-player');
+          const groundShadowBelly = document.getElementById('ground-shadow');
+          const eq = document.getElementById('audio-equalizer');
+          if (eq) eq.classList.add('active');
+
+          if (groundShadowBelly) {
+            groundShadowBelly.className = 'ground-shadow shadow-belly-laugh';
+          }
+
+          // 2D 待机体平滑淡出，随后隐藏防止透明背景穿模
+          rig.style.transition = 'opacity 0.18s ease, transform 0.22s ease';
+          rig.style.transform = 'scale(1.1) translateY(-10px)';
+          setTimeout(() => {
+            rig.style.opacity = '0';
+            setTimeout(() => {
+              if (actionVideo && actionVideo.classList.contains('active')) {
+                rig.style.display = 'none';
+              }
+            }, 100);
+          }, 80);
+
+          // 唤醒并播放 3D 抱肚子大笑动作视频层 (原生内嵌音轨，零延迟音画同步)
+          if (actionVideo) {
+            actionVideo.volume = voiceVolume;
+            actionVideo.currentTime = 0;
+            actionVideo.classList.add('active');
+            
+            const playPromise = actionVideo.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(err => {
+                console.warn('Action video autoplay blocked, trying unmuted:', err);
+                actionVideo.muted = false;
+                actionVideo.play();
+              });
+            }
+          }
+
+          // 伴随狂笑节奏爆发震屏与爆笑粒子特效
+          triggerScreenShake();
+          spawnGPUParticles('🤣', 28);
+          spawnGPUParticles('✨', 20);
+
+          let laughTimer1 = setTimeout(() => {
+            triggerScreenShake();
+            spawnGPUParticles('🤣', 22);
+            spawnGPUParticles('💥', 15);
+          }, 3500);
+
+          let laughTimer2 = setTimeout(() => {
+            triggerScreenShake();
+            spawnGPUParticles('🤣', 25);
+            spawnGPUParticles('✨', 20);
+          }, 7000);
+
+          // 9.1s 完整大笑结束后，用官方原声答谢送礼观众并平滑还原待机状态
+          currentActionTimeout = setTimeout(() => {
+            clearTimeout(laughTimer1);
+            clearTimeout(laughTimer2);
+            playNaiwaAudio(ACTION_VOICES.lollipop, `哈哈哈哈！哎呀妈呀！棒棒糖太逗了，谢谢【${user}】，笑得我肚皮都抽筋啦！`);
+            resetToIdle();
+          }, 9200);
+          break;
+
+        // -------------------------------------------------------------
+        // 免费指令与辅助交互 (保持原版原声)
+        // -------------------------------------------------------------
+        case 'bubbles': // 吐泡泡
+          playNaiwaAudio(ACTION_VOICES.bubbles, '咕噜噜～奶娃吐了好多好玩的大泡泡！', true);
+          rig.className = 'character-rig idle-breath';
+          setEyes('happy');
+          setMouth('o');
+          spawnBubbles(35);
+          currentActionTimeout = setTimeout(resetToIdle, 2500);
+          break;
+
+        case 'sleep': // 睡觉呼呼
+          playNaiwaAudio(ACTION_VOICES.sleep, '呼噜噜……好困呀，让奶娃眯一小会儿……', true);
+          rig.className = 'character-rig idle-breath';
+          setEyes('happy');
+          setMouth('neutral');
+          sleepBubble.classList.add('active');
+          currentActionTimeout = setTimeout(resetToIdle, 3800);
+          break;
+
+        case 'squish': // 恶搞压扁
+          spawnHammerEffect();
+          setTimeout(() => {
+            triggerScreenShake();
+            rig.className = 'character-rig anim-squish';
+            setEyes('dizzy');
+            setMouth('wavy');
+            playNaiwaAudio(ACTION_VOICES.squish, '哎哟！好疼！谁把奶娃压扁扁啦！', true);
+            spawnGPUParticles('💥', 25);
+          }, 450);
+          currentActionTimeout = setTimeout(resetToIdle, 2800);
+          break;
+
+        case 'dance': // 摇摆跳舞
+          playNaiwaAudio(ACTION_VOICES.dance, '耶，帅的代名词就是我耶！一起摇摆！', true);
+          rig.className = 'character-rig anim-dance';
+          setEyes('happy');
+          setMouth('open');
+          spawnGPUParticles('🎵', 28);
+          currentActionTimeout = setTimeout(resetToIdle, 3000);
+          break;
+      }
+    }
+
+    // =======================================================
+    // 奶娃真实高保真语音驱动引擎 (HTML5 Audio 彻底解决静音问题)
+    // =======================================================
+    const voicePlayer = document.getElementById('voice-player');
+    let voiceVolume = 0.88; // 预留 2.5dB 录音棚防破音动态余量
+    voicePlayer.volume = voiceVolume;
+
+    // 音量调节
+    function setVoiceVolume(val) {
+      voiceVolume = (val / 100.0) * 0.88;
+      voicePlayer.volume = voiceVolume;
+      const t = document.getElementById('voice-vol-text');
+      if (t) t.innerText = `${val}%`;
+    }
+
+    // 任何用户点击立即激活音频上下文
+    let audioUnlocked = false;
+    function unlockAudioContext() {
+      if (!audioUnlocked) {
+        audioUnlocked = true;
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          ctx.resume();
+        } catch(e) {}
+      }
+    }
+    document.addEventListener('click', unlockAudioContext, { once: true });
+    document.addEventListener('touchstart', unlockAudioContext, { once: true });
+
+    // 核心发声与嘴型同步函数 (保护动作特效不被重置)
+        // =======================================================
+    // 智能音频闪避 (Audio Ducking)：放歌时奶娃说话自动压低背景音乐
+    // =======================================================
+    let userBgmVolume = 0.35;
+    let duckFadeTimer = null;
+
+    function duckBgm() {
+      if (!isPlaying || !bgmPlayer) return;
+      if (duckFadeTimer) clearInterval(duckFadeTimer);
+      const targetVol = userBgmVolume * 0.20; // 说话时柔和压低到 20%
+      duckFadeTimer = setInterval(() => {
+        if (bgmPlayer.volume > targetVol + 0.01) {
+          bgmPlayer.volume = Math.max(targetVol, bgmPlayer.volume - 0.015);
+        } else {
+          bgmPlayer.volume = targetVol;
+          clearInterval(duckFadeTimer);
+          duckFadeTimer = null;
+        }
+      }, 15);
+    }
+
+    function unduckBgm() {
+      if (!isPlaying || !bgmPlayer) return;
+      if (duckFadeTimer) clearInterval(duckFadeTimer);
+      duckFadeTimer = setInterval(() => {
+        if (bgmPlayer.volume < userBgmVolume - 0.01) {
+          bgmPlayer.volume = Math.min(userBgmVolume, bgmPlayer.volume + 0.015);
+        } else {
+          bgmPlayer.volume = userBgmVolume;
+          clearInterval(duckFadeTimer);
+          duckFadeTimer = null;
+        }
+      }, 20);
+    }
+
+    function testTalking() {
+      unlockAudioContext();
+      const phrases = [
+        "哥哥姐姐好呀！奶娃正在直播间甜甜地陪你们呢～",
+        "今天天气真好，奶娃要跟哥哥姐姐一起开开心心的！",
+        "谢谢大家的陪伴，想听什么歌记得发点歌哦～",
+        "放着好听的音乐，奶娃也能随时跟你们聊天互动哦！"
+      ];
+      const p = phrases[Math.floor(Math.random() * phrases.length)];
+      startTalking(p);
+    }
+
+    let talkWatchdog = null;
+
+    function playNaiwaAudio(audioSrc, text, isAction = false) {
+      unlockAudioContext();
+      if (text) setSpeech(text);
+
+      if (talkWatchdog) clearTimeout(talkWatchdog);
+
+      try {
+        voicePlayer.pause();
+        voicePlayer.currentTime = 0;
+      } catch(e) {}
+
+      // 确保音量为当前设定值 (至少 0.1 避免静音)
+      voicePlayer.volume = Math.max(0.1, voiceVolume || 0.88);
+
+      // 1. 播放开始时：触发嘴型与背景音乐平滑闪避 (Audio Ducking)
+      voicePlayer.onplay = () => {
+        duckBgm();
+        if (!isAction) {
+          startTalkingAnimation();
+        } else {
+          const eq = document.getElementById('audio-equalizer');
+          if (eq) eq.classList.add('active');
+        }
+      };
+
+      // 2. 播放结束时：平滑恢复背景音乐并停止嘴型
+      voicePlayer.onended = () => {
+        unduckBgm();
+        if (!isAction) {
+          stopTalking();
+        } else {
+          const eq = document.getElementById('audio-equalizer');
+          if (eq) eq.classList.remove('active');
+        }
+      };
+
+      // 3. 错误自动容灾降级：若远程 TTS 加载失败，无缝回退官方原声切片，确保 100% 有声音
+      voicePlayer.onerror = (e) => {
+        console.warn("[Voice Error] Audio load error:", voicePlayer.src, e);
+        if (voicePlayer.src && voicePlayer.src.includes('/api/tts')) {
+          const fallback = pickNailongVoice(text);
+          console.log("[Voice Fallback] Auto fallback to official voice:", fallback);
+          voicePlayer.onerror = null; // 防止双重重试
+          voicePlayer.src = fallback;
+          voicePlayer.play().catch(err => console.warn("Fallback play blocked:", err));
+        } else {
+          stopTalking();
+        }
+      };
+
+      voicePlayer.src = audioSrc;
+      const playPromise = voicePlayer.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          // 音频播放顺利开始
+        }).catch(err => {
+          console.warn("[Voice Play Blocked/Failed]:", err);
+          // 若远程 TTS 遭遇浏览器阻拦或解码异常，直接调用原声切片
+          if (audioSrc && audioSrc.includes('/api/tts')) {
+            const fallback = pickNailongVoice(text);
+            console.log("[Voice Catch Fallback]:", fallback);
+            voicePlayer.src = fallback;
+            voicePlayer.play().catch(e => {
+              if (!isAction) {
+                startTalkingAnimation();
+                setTimeout(stopTalking, 3500);
+              }
+            });
+          } else {
+            if (!isAction) {
+              startTalkingAnimation();
+              setTimeout(stopTalking, 3500);
+            }
+          }
+        });
+      }
+
+      // 12秒安全看门狗：防止极端情况下页面卡在说话动画
+      talkWatchdog = setTimeout(() => {
+        if (isTalking && voicePlayer.paused) {
+          stopTalking();
+        }
+      }, 12000);
+    }
+
+    function startTalkingAnimation() {
+      if (isTalking) return;
+      isTalking = true;
+      rig.className = 'character-rig idle-breath';
+      const eq = document.getElementById('audio-equalizer');
+      if (eq) eq.classList.add('active');
+
+      let cycle = 0;
+      talkInterval = setInterval(() => {
+        cycle = (cycle + 1) % 4;
+        if (cycle === 0) setMouth('neutral');
+        else if (cycle === 1) setMouth('open');
+        else if (cycle === 2) setMouth('o');
+        else setMouth('open');
+      }, 140);
+    }
+
+    // (ACTION_VOICES 已统一提升至顶部全局)
+
+    function setSpeech(txt) {
+      if (speechText) speechText.innerText = txt;
+    }
+
+    // 智能原声匹配分配器 (任意弹幕/提问均匹配到最贴合的官方原声切片)
+    function pickNailongVoice(text) {
+      if (!text) return ACTION_VOICES.intro;
+      const t = text.toLowerCase();
+      if (t.includes('吃') || t.includes('饭') || t.includes('饿') || t.includes('饱')) return ACTION_VOICES.hungry;
+      if (t.includes('肚子') || t.includes('胖') || t.includes('酷') || t.includes('帅') || t.includes('夸')) return ACTION_VOICES.bloat;
+      if (t.includes('跳') || t.includes('666') || t.includes('赢') || t.includes('胜')) return ACTION_VOICES.boing;
+      if (t.includes('怕') || t.includes('吓') || t.includes('打') || t.includes('坏')) return ACTION_VOICES.shiver;
+      if (t.includes('扁') || t.includes('锤') || t.includes('等')) return ACTION_VOICES.squish;
+      if (t.includes('笑') || t.includes('哈') || t.includes('大礼') || t.includes('钱')) return ACTION_VOICES.gold;
+      return ACTION_VOICES.intro;
+    }
+
+    // 任意文本说话调度 (AI 动态生成的回复直接调用 /api/tts 接口生成高品质真人语音，其余动作回退原声)
+    function startTalking(text, audioUrl = null) {
+      if (text) setSpeech(text);
+      if (audioUrl) {
+        playNaiwaAudio(audioUrl, text);
+        return;
+      }
+      if (text && text.trim().length > 0) {
+        const ttsUrl = `/api/tts?text=${encodeURIComponent(text.trim())}`;
+        playNaiwaAudio(ttsUrl, text);
+        return;
+      }
+      const targetSrc = pickNailongVoice(text);
+      playNaiwaAudio(targetSrc, text);
+    }
+
+    function stopTalking() {
+      isTalking = false;
+      unduckBgm();
+      if (talkInterval) clearInterval(talkInterval);
+      try {
+        voicePlayer.pause();
+      } catch(e) {}
+      const eq = document.getElementById('audio-equalizer');
+      if (eq) eq.classList.remove('active');
+      resetToIdle();
+    }
+
+    // 导演台直接测试奶娃发声
+    
+    // 动态音色主题切换 (太空杀官方奶龙原声 / 神经奶龙男宝 / 软糖女宝)
+    let currentVoiceTheme = 'nailong_official';
+    function switchVoiceTheme(theme) {
+      currentVoiceTheme = theme;
+      if (theme === 'nailong_official') {
+        ACTION_VOICES.intro = 'assets/voice/nailong_official/intro.mp3';
+        ACTION_VOICES.boing = 'assets/voice/nailong_official/boing.mp3';
+        ACTION_VOICES.hungry = 'assets/voice/nailong_official/hungry.mp3';
+        ACTION_VOICES.revive = 'assets/voice/nailong_official/boing.mp3';
+        ACTION_VOICES.squish = 'assets/voice/nailong_official/squish.mp3';
+        ACTION_VOICES.shiver = 'assets/voice/nailong_official/shiver.mp3';
+        ACTION_VOICES.bloat = 'assets/voice/nailong_official/belly.mp3';
+        setSpeech('已切换音色：★ 太空杀官方奶龙原声 (纯享原版原声)');
+        playNaiwaAudio(ACTION_VOICES.intro, '我是奶龙！');
+        return;
+      }
+
+      for (let key in ACTION_VOICES) {
+        if (theme === 'alex') {
+          ACTION_VOICES[key] = `assets/voice/alex/${key}.mp3`;
+        } else {
+          ACTION_VOICES[key] = `assets/voice/${key}.mp3`;
+        }
+      }
+      setSpeech(`已切换音色：${theme === 'alex' ? '奶龙同款 · 呆萌男宝音' : '软糖甜妹 · 甜萌女宝音'}`);
+      testVoice();
+    }
+
+    function testVoice() {
+      playNaiwaAudio(ACTION_VOICES.intro, '哥哥姐姐好呀！我是小主播奶娃，说话是肚子里咕噜咕噜发出来的哦～');
+    }
+
+    function showGiftToast(user, gift, bowls, icon) {
+      const container = document.getElementById('gift-toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = 'gift-toast';
+      toast.innerHTML = `
+        <span class="toast-avatar">${icon || '🎁'}</span>
+        <div class="toast-text">
+          <strong>${user}</strong> 送出 <span class="toast-gold">${gift}</span> (+${bowls}碗白饭)
+        </div>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 3800);
+    }
+
+    function updateRiceBowl(bowls) {
+      const label = document.getElementById('rice-label');
+      if (label) label.innerText = `🍚 白饭 ${bowls.toFixed(1)}碗`;
+      const mound = document.getElementById('rice-mound');
+      if (mound) {
+        const scale = Math.min(1.8, Math.max(0.6, bowls / 150.0));
+        mound.style.transform = `scale(${scale})`;
+      }
+    }
+
+    // =======================================================
+    // 抖音开播实时精准统计系统 (自然日自动按天累计 · 支持一键清零起算)
+    // =======================================================
+    const STATS_KEY = 'douyin_live_stats_' + new Date().toLocaleDateString('zh-CN').replace(/\//g, '-');
+    let liveStats = {
+      totalIncome: 0.00,  // 今日总收益 (元)
+      totalCoins: 0,      // 今日总抖币
+      totalBowls: 0.0,    // 今日总投喂白饭 (碗)
+      totalTokens: 0,     // 今日消耗 Token
+      supporters: {}      // 投喂官榜单 { "昵称": bowls }
+    };
+
+    function loadLiveStats() {
+      try {
+        const raw = localStorage.getItem(STATS_KEY);
+        if (raw) {
+          liveStats = Object.assign(liveStats, JSON.parse(raw));
+        }
+      } catch(e) {}
+      renderStatsUI();
+    }
+
+    function saveLiveStats() {
+      try {
+        localStorage.setItem(STATS_KEY, JSON.stringify(liveStats));
+      } catch(e) {}
+    }
+
+    function renderStatsUI() {
+      const incomeEl = document.getElementById('val-income');
+      const bowlsEl = document.getElementById('val-bowls');
+      const tokensEl = document.getElementById('val-tokens');
+      const balanceEl = document.getElementById('val-balance');
+      const wishText = document.getElementById('wish-text');
+      const wishPercent = document.getElementById('wish-percent');
+      const wishProgress = document.getElementById('wish-progress');
+      const wishPercentCard = document.getElementById('wish-percent-card');
+
+      if (incomeEl) incomeEl.innerText = `¥ ${liveStats.totalIncome.toFixed(2)}`;
+      if (bowlsEl) bowlsEl.innerText = `${liveStats.totalBowls.toFixed(1)} 碗白饭`;
+      if (tokensEl) tokensEl.innerText = liveStats.totalTokens.toLocaleString();
+      if (balanceEl) balanceEl.innerText = `${liveStats.totalBowls.toFixed(1)} 碗`;
+      
+      const percent = Math.min(100, Math.round((liveStats.totalBowls / 500.0) * 100));
+      if (wishText) wishText.innerText = `🍚 今天的小愿望 · 吃饱 ${liveStats.totalBowls.toFixed(1)} / 500 碗`;
+      if (wishPercent) wishPercent.innerText = `${percent}%`;
+      if (wishProgress) wishProgress.style.width = `${percent}%`;
+      if (wishPercentCard) wishPercentCard.innerText = `心愿进度 ${percent}%`;
+
+      updateTopSupporterUI();
+      updateRiceBowl(liveStats.totalBowls);
+    }
+
+    function updateTopSupporterUI() {
+      let topUser = '虚位以待';
+      let maxBowls = 0.0;
+      for (const [u, b] of Object.entries(liveStats.supporters)) {
+        if (b > maxBowls) {
+          maxBowls = b;
+          topUser = u;
+        }
+      }
+      const nameEl = document.getElementById('vip-name');
+      const bowlEl = document.getElementById('vip-bowls');
+      if (nameEl) nameEl.innerText = topUser;
+      if (bowlEl) bowlEl.innerText = maxBowls.toFixed(1);
+    }
+
+    // 增加白饭、累加抖币收益并刷新 UI
+    function feedRice(bowls, coins = 0, user = '') {
+      liveStats.totalBowls += bowls;
+      if (coins > 0) {
+        liveStats.totalCoins += coins;
+        liveStats.totalIncome += (coins * 0.1); // 抖音规则：10 抖币 = 1 元人民币
+      }
+      if (user && user !== '热心观众' && user !== '直播间老铁') {
+        liveStats.supporters[user] = (liveStats.supporters[user] || 0) + bowls;
+      }
+      saveLiveStats();
+      renderStatsUI();
+    }
+
+    // 记录 AI 大模型 Token 消耗
+    function recordTokensUsed(tokens) {
+      if (tokens > 0) {
+        liveStats.totalTokens += tokens;
+        saveLiveStats();
+        renderStatsUI();
+      }
+    }
+
+    // 主播/管理员手动一键清零本场开播数据
+    function resetLiveStats() {
+      liveStats = {
+        totalIncome: 0.00,
+        totalCoins: 0,
+        totalBowls: 0.0,
+        totalTokens: 0,
+        supporters: {}
+      };
+      saveLiveStats();
+      renderStatsUI();
+      try {
+        fetch('http://localhost:12393/api/stats/reset', { method: 'POST' }).catch(()=>{});
+      } catch(e) {}
+      alert('已成功清零！本场直播收益、Token与喂饭进度已重新从0开始起算！');
+    }
+
+    loadLiveStats();
+
+
+    // 添加一条弹幕到列表
+    function addDanmaku(user, content, isGift = false) {
+      if (typeof updateLastDanmakuTime === 'function') updateLastDanmakuTime();
+      const msg = document.createElement('div');
+      msg.className = 'danmaku-msg';
+      if (isGift) {
+        msg.innerHTML = `<span class="user-name">${user}:</span> <span class="gift-badge">${content}</span>`;
+      } else {
+        msg.innerHTML = `<span class="user-name">${user}:</span> ${content}`;
+      }
+      danmakuList.appendChild(msg);
+      if (danmakuList.children.length > 5) {
+        danmakuList.removeChild(danmakuList.children[0]);
+      }
+    }
+
+    // 模拟弹幕与指令解析
+    function mockDanmaku() {
+      const samples = [
+        { u: '追光者', t: '蹦跳', cmd: 'boing' },
+        { u: '甜心布丁', t: '[送出 小心心 x1]', isGift: true, cmd: 'blush' },
+        { u: '大西瓜', t: '吐泡泡', cmd: 'bubbles' },
+        { u: '老六本六', t: '[送出 棒棒糖 x1]', isGift: true, cmd: 'belly_laugh' },
+        { u: '吃货小美', t: '[送出 甜甜圈 x1]', isGift: true, cmd: 'donut' },
+        { u: '豪爽二哥', t: '[送出 大啤酒 x1]', isGift: true, cmd: 'pijiu' },
+        { u: '星空漫步', t: '[送出 为你点亮 x1]', isGift: true, cmd: 'balloon' },
+        { u: '夜猫子', t: '睡觉', cmd: 'sleep' },
+        { u: '小可爱', t: '[送出 手势比心 x1]', isGift: true, cmd: 'hearts' },
+        { u: '粉丝牌铁粉', t: '[送出 玫瑰 x1]', isGift: true, cmd: 'rose' },
+        { u: '榜一大哥', t: '[送出 你最好看 x1]', isGift: true, cmd: 'haokan' }
+      ];
+      const r = samples[Math.floor(Math.random() * samples.length)];
+      addDanmaku(r.u, r.t, r.isGift);
+      if (r.cmd) triggerAction(r.cmd);
+    }
+
+    // 自由输入弹幕测试并调用 AI AI 智能回复
+    async function sendTestDanmaku() {
+      unlockAudioContext();
+      updateLastDanmakuTime();
+      const input = document.getElementById('danmaku-test-input');
+      const text = input ? input.value.trim() : '';
+      if (!text) return;
+      input.value = '';
+
+      // 1. 本地弹幕区直接显示
+      addDanmaku('测试观众 👧', text, false);
+
+      // 2. 调用 12393 网关，生成 AI AI 语音与嘴型反馈
+      try {
+        const resp = await fetch('http://localhost:12393/api/danmaku', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: '测试观众', danmaku: text })
+        });
+        const res = await resp.json();
+        console.log('[测试弹幕已推送到网关]', res);
+      } catch(err) {
+        console.warn('推送到网关失败:', err);
+      }
+    }
+
+    // =======================================================
+    // 纯真实弹幕响应模式 (杜绝任何虚拟/自动弹幕生成)
+    // =======================================================
+    let autoWarmupEnabled = false; // 默认永久关闭假弹幕
+    let lastDanmakuTime = Date.now();
+
+    function updateLastDanmakuTime() {
+      lastDanmakuTime = Date.now();
+    }
+
+    function toggleAutoWarmup() {
+      autoWarmupEnabled = !autoWarmupEnabled;
+      const btn = document.getElementById('btn-warmup-toggle');
+      if (btn) {
+        if (autoWarmupEnabled) {
+          btn.innerText = '🤖 智能暖场自动回复: 已手动临时开启';
+          btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        } else {
+          btn.innerText = '🤖 仅响应真实直播弹幕 (虚拟暖场已关闭)';
+          btn.style.background = 'rgba(255, 255, 255, 0.15)';
+        }
+      }
+    }
+
+    // =======================================================
+    // 60FPS+ 硬件加速粒子系统 (彻底替代大画布重绘，极度丝滑)
+    // =======================================================
+    function spawnGPUParticles(symbol, count) {
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'fx-item';
+        el.innerText = symbol;
+
+        const startX = Math.random() * 980 + 50;
+        const startY = -60 - Math.random() * 150;
+        const size = Math.floor(Math.random() * 26 + 28);
+        const duration = Math.random() * 1.2 + 1.6; // 秒
+        const driftX = (Math.random() - 0.5) * 260;
+        const rotateDeg = (Math.random() - 0.5) * 540;
+
+        el.style.fontSize = `${size}px`;
+        el.style.transform = `translate3d(${startX}px, ${startY}px, 0)`;
+        el.style.transition = `transform ${duration}s cubic-bezier(0.25, 1, 0.5, 1), opacity ${duration}s ease-in`;
+        el.style.opacity = '1';
+
+        fxContainer.appendChild(el);
+
+        // 触发硬件加速下落
+        requestAnimationFrame(() => {
+          el.style.transform = `translate3d(${startX + driftX}px, ${1940}px, 0) rotate(${rotateDeg}deg)`;
+          el.style.opacity = '0';
+        });
+
+        // 动画结束自动移出 DOM
+        setTimeout(() => {
+          if (el.parentNode) el.parentNode.removeChild(el);
+        }, duration * 1000 + 100);
+      }
+    }
+
+    // 吐泡泡硬件加速漂浮动效
+    function spawnBubbles(count) {
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'fx-item fx-bubble';
+
+        const startX = 540 + (Math.random() - 0.5) * 200;
+        const startY = 1150 + (Math.random() - 0.5) * 100;
+        const size = Math.floor(Math.random() * 32 + 36);
+        const duration = Math.random() * 1.5 + 2.2;
+        const driftX = (Math.random() - 0.5) * 450;
+        const driftY = -(Math.random() * 850 + 400);
+
+        el.style.width = `${size}px`;
+        el.style.height = `${size}px`;
+        el.style.transform = `translate3d(${startX}px, ${startY}px, 0) scale(0.3)`;
+        el.style.transition = `transform ${duration}s cubic-bezier(0.2, 0.8, 0.4, 1), opacity ${duration}s ease-out`;
+        el.style.opacity = '0.9';
+
+        fxContainer.appendChild(el);
+
+        requestAnimationFrame(() => {
+          el.style.transform = `translate3d(${startX + driftX}px, ${startY + driftY}px, 0) scale(1.15)`;
+          el.style.opacity = '0';
+        });
+
+        setTimeout(() => {
+          if (el.parentNode) el.parentNode.removeChild(el);
+        }, duration * 1000 + 100);
+      }
+    }
+
+    // 下落大锤动效
+    function spawnHammerEffect() {
+      const hammer = document.createElement('div');
+      hammer.className = 'fx-hammer';
+      hammer.innerText = '🔨';
+      fxContainer.appendChild(hammer);
+      setTimeout(() => {
+        if (hammer.parentNode) hammer.parentNode.removeChild(hammer);
+      }, 700);
+    }
+
+    // ============ 本地 Open-LLM-VTuber WebSocket 自动联动 ============
+    function connectOpenLLMVTuber() {
+      const statusEl = document.getElementById('ws-status');
+      try {
+        const ws = new WebSocket('ws://localhost:12393/client-ws');
+        
+        ws.onopen = () => {
+          window.wsConnected = true;
+          statusEl.innerText = 'WebSocket: 已成功连接 Open-LLM-VTuber (localhost:12393) ✅ [AI 大脑已就绪]';
+          statusEl.style.color = '#38ef7d';
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            // 热重载事件
+            if (data.type === 'reload') {
+              window.location.reload();
+              return;
+            }
+
+            // 0. AI AI 智能弹幕回复事件
+            if (data.type === 'llm_reply' || data.type === 'danmaku_reply' || data.reply) {
+              const replyText = data.reply || data.text;
+              if (data.tokens_used) {
+                recordTokensUsed(data.tokens_used);
+              }
+              if (replyText) {
+                addDanmaku('奶娃 🍼', replyText, false);
+                startTalking(replyText);
+              }
+              return;
+            }
+
+            if (data.type === 'reset_stats') {
+              liveStats = {
+                totalIncome: 0.00,
+                totalCoins: 0,
+                totalBowls: 0.0,
+                totalTokens: 0,
+                supporters: {}
+              };
+              saveLiveStats();
+              renderStatsUI();
+              return;
+            }
+
+            if (data.type === 'llm_delta' || data.text) {
+              const txt = data.text || data.delta;
+              startTalking(txt);
+            }
+
+            if (data.type === 'audio_end' || data.status === 'finish') {
+              stopTalking();
+            }
+
+            // 1. 结构化礼物事件直连 (接收来自抓取器/后端的送礼事件)
+            if (data.type === 'gift' || data.gift) {
+              handleGiftEvent(data.user || '热心观众', data.gift, data.count || 1);
+            }
+            // 2. 结构化点歌事件直连
+            else if (data.type === 'song_request' || data.song) {
+              handleSongRequest(data.song, data.user || '热心观众', data.isPriority || false);
+            }
+            // 3. 弹幕消息事件
+            else if (data.danmaku) {
+              handleDanmakuCommand(data.user || '热心观众', data.danmaku);
+            }
+            // 4. 观众进房欢迎事件
+            else if (data.type === 'welcome') {
+              triggerWelcome(data.user || '热心观众');
+            }
+          } catch(e) {}
+        };
+
+        ws.onerror = () => {
+          statusEl.innerText = 'WebSocket: 本地 12393 未启动，已自动开启纯前端 60FPS 演示模式';
+          statusEl.style.color = '#ffd043';
+        };
+
+        ws.onclose = () => {
+          setTimeout(connectOpenLLMVTuber, 5000);
+        };
+      } catch(e) {
+        statusEl.innerText = 'WebSocket: 演示模式';
+      }
+    }
+
+    function triggerWelcome(user) {
+      const toast = document.getElementById('welcome-toast');
+      if (!toast) return;
+      toast.innerHTML = `👋 欢迎 <span class="welcome-user">${user}</span> 进入直播间~`;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3800);
+    }
+    connectOpenLLMVTuber();
+
+    // =======================================================
+    // 抖音官方礼物核心分发引擎 (礼物事件 ➔ 动作特技 ➔ 跑道横幅 ➔ 喂饭进度 & 收益累加)
+    // =======================================================
+    const GIFT_ACTION_MAP = {
+      // 1. 小心心 (1抖币)
+      '小心心': { action: 'blush', bowls: 0.2, coins: 1, icon: '💖' },
+      '心心': { action: 'blush', bowls: 0.2, coins: 1, icon: '💖' },
+      '心动': { action: 'blush', bowls: 0.2, coins: 1, icon: '💖' },
+      // 2. 粉丝团灯牌 (1抖币)
+      '粉丝团灯牌': { action: 'dengpai', bowls: 0.2, coins: 1, icon: '👑' },
+      '灯牌': { action: 'dengpai', bowls: 0.2, coins: 1, icon: '👑' },
+      '粉丝团': { action: 'dengpai', bowls: 0.2, coins: 1, icon: '👑' },
+      // 3. 鲜花 (10抖币) / 玫瑰花 (1抖币)
+      '鲜花': { action: 'rose', bowls: 2.0, coins: 10, icon: '💐' },
+      '玫瑰花': { action: 'rose', bowls: 0.2, coins: 1, icon: '🌹' },
+      '玫瑰': { action: 'rose', bowls: 0.2, coins: 1, icon: '🌹' },
+      // 4. 棒棒糖 (9抖币 · 3D狂笑王牌)
+      '棒棒糖': { action: 'belly_laugh', bowls: 1.8, coins: 9, icon: '🍭' },
+      // 5. 荧光棒 (9抖币)
+      '荧光棒': { action: 'praise', bowls: 1.8, coins: 9, icon: '✨' },
+      '打call': { action: 'praise', bowls: 1.8, coins: 9, icon: '✨' },
+      // 6. 墨镜 (99抖币)
+      '墨镜': { action: 'mojing', bowls: 19.8, coins: 99, icon: '🕶️' },
+      // 7. 比心 (199抖币 · VIP插队点歌特权)
+      '比心': { action: 'vip_song', bowls: 39.8, coins: 199, icon: '🫰' },
+      '手势比心': { action: 'vip_song', bowls: 39.8, coins: 199, icon: '🫰' },
+      '为你点亮': { action: 'vip_song', bowls: 1.8, coins: 9, icon: '⭐' },
+      // 8. 热气球 (520抖币 · 浪漫大招)
+      '热气球': { action: 'balloon', bowls: 104.0, coins: 520, icon: '🎈' },
+      '嘉年华': { action: 'balloon', bowls: 6000.0, coins: 30000, icon: '🎡' }
+    };
+
+    function handleGiftEvent(user, giftName, count = 1, rawText = '') {
+      if (!giftName) return;
+      // 1. 规范化并清洗礼物名称（去除“送给主播”、“送出”、“到-1”、“x1”等前后缀）
+      let cleanGift = giftName.replace(/^[\[【]?\s*(?:送给主播|送给|送出|送了|赠送)?\s*/, '').replace(/[\]】]/g, '').trim();
+      cleanGift = cleanGift.replace(/(?:[xX*×\-:]|到-?)\s*\d+.*$/, '').replace(/\d+\s*(?:个|支|朵|束|份|把).*$/, '').trim();
+      if (!cleanGift) cleanGift = giftName.trim();
+      
+      // 2. 查找映射表（长词优先匹配）
+      let match = null;
+      let matchedKey = '';
+      const giftKeys = Object.keys(GIFT_ACTION_MAP).sort((a, b) => b.length - a.length);
+      for (let k of giftKeys) {
+        if (cleanGift.includes(k) || k.includes(cleanGift) || giftName.includes(k)) {
+          match = GIFT_ACTION_MAP[k];
+          matchedKey = k;
+          break;
+        }
+      }
+
+      const displayGift = matchedKey || cleanGift;
+      const icon = match ? match.icon : '🎁';
+      const bowls = match ? match.bowls * count : 0.2 * count;
+      const coins = match ? match.coins * count : 1 * count;
+      
+      // 3. 跑道飘窗展示专属特效横幅
+      showGiftToast(user, `${displayGift} x${count}`, bowls, icon);
+
+      // 4. 增加白饭、累加抖币收益并刷新心愿进度
+      feedRice(bowls, coins, user);
+
+      // 5. 如果没有带原始弹幕参数（例如通过原生WebSocket直接推送），同步在公屏弹幕列表展示金色通知
+      if (!rawText) {
+        addDanmaku(user, `送给主播 ${displayGift} x${count}`, true);
+      }
+
+      // 6. 触发专属特技与动效
+      if (match) {
+        if (match.action === 'vip_song') {
+          // 为你点亮送出：登记该用户到 VIP 挂起池 (90秒内发任何文字直接识别为指定歌名)
+          window.pendingVipUsers[user] = Date.now();
+          // 如果弹幕同一句已经带了歌名 (例如: "[送出 为你点亮 x1] 点歌 孤勇者")
+          const specifiedSong = extractSongName(rawText);
+          if (specifiedSong) {
+            delete window.pendingVipUsers[user];
+            handleSongRequest(specifiedSong, user, true);
+          } else {
+            // 观众先送礼、后发歌名：默认先送上一首热门主打歌，奶娃亲口引导小主人发歌名
+            const defaultSong = "爱如火 (极乐净土版)";
+            handleSongRequest(defaultSong, user, true);
+            playNaiwaAudio(ACTION_VOICES.vip, `哇！感谢【${user}】送出【为你点亮】！想指定歌曲请在公屏发送「点歌 歌名」（一定要带“点歌”二字哦），奶娃立刻为你插队换歌～`, true);
+          }
+        } else {
+          triggerAction(match.action, user, true);
+        }
+      } else {
+        triggerAction('blush', user, true); // 默认未知礼物害羞感谢
+      }
+    }
+
+    // 智能解析弹幕口令 (支持送礼文本抓取解析、免费中文词触发动作、大招专属引导送礼)
+    function handleDanmakuCommand(user, text) {
+      const t = text.trim();
+
+      // A. 自动检测送礼字符串 (例如 "Linly 送给主播 心动到-1"、"[送出 棒棒糖 x1]"、"送出 为你点亮 点歌 孤勇者")
+      const isGiftText = t.includes('送给主播') || t.includes('送给') || t.includes('送出') || t.includes('送了') || t.includes('赠送') || t.includes('赠给') || t.startsWith('[');
+      if (isGiftText) {
+        const giftKeys = Object.keys(GIFT_ACTION_MAP).sort((a, b) => b.length - a.length);
+        for (let g of giftKeys) {
+          if (t.includes(g)) {
+            const numMatch = t.match(/(?:[xX*×\-:]|到-?)\s*(\d+)/) || t.match(/(\d+)\s*(?:个|支|朵|束|份|把)/);
+            const count = numMatch ? parseInt(numMatch[1]) : 1;
+            const userMatch = t.match(/^(.*?)\s*(?:送给主播|送给|送出|送了|赠送)/);
+            const giftUser = (userMatch && userMatch[1].trim()) ? userMatch[1].trim() : user;
+            addDanmaku(giftUser, t, true);
+            handleGiftEvent(giftUser, g, count, t);
+            return;
+          }
+        }
+      }
+
+      // 普通弹幕列表追加
+      addDanmaku(user, text, false);
+
+      // B. VIP特权闭环：检查该观众是否刚送过【为你点亮】(处于 90 秒 VIP 优先指定窗口)
+      if (window.pendingVipUsers && window.pendingVipUsers[user] && (Date.now() - window.pendingVipUsers[user] < 90000)) {
+        const extracted = extractSongName(t) || (t.includes('点歌') ? t.replace(/.*点歌/, '').trim() : t.replace(/[《》]/g, '').trim());
+        delete window.pendingVipUsers[user]; // 消费掉特权
+        playNaiwaAudio(ACTION_VOICES.vip, `收到【${user}】的VIP指定歌单！已立即插队为你切换到《${extracted}》！`, true);
+        handleSongRequest(extracted, user, true);
+        return;
+      }
+
+      // C. 弹幕点歌闭环检测：严格要求附带“点歌”二字（或带插队特权）
+      if (t.includes('点歌') || t.includes('插队')) {
+        const songName = extractSongName(t) || t.replace(/.*(点歌|插队)/, '').trim();
+        if (songName && songName.length >= 2) {
+          const isVip = t.includes('插队') || t.includes('为你点亮');
+          handleSongRequest(songName, user, isVip);
+          return;
+        } else {
+          startTalking(`想听什么歌呀？请发送「点歌 歌名」，比如「点歌 孤勇者」，奶娃就帮你排上啦～`);
+          return;
+        }
+      }
+
+      // D. 规则提醒：如果观众发了热门歌名或询问点歌，但未附带“点歌”二字，智能语音提醒规则！
+      const isSongKeyword = TRENDING_HOT_SONGS.some(s => t.includes(s.title.replace(/\(.*?\)/, '').trim()));
+      if (isSongKeyword || t.includes('怎么点') || t.includes('想听歌') || t.includes('来首歌') || t.includes('放首歌')) {
+        const example = isSongKeyword ? t : '孤勇者';
+        startTalking(`点歌请附带“点歌”二字哦～例如发送「点歌 ${example}」，奶娃才会帮你点播上哦～`);
+        return;
+      }
+
+      // C. 免费互动指令 (中文动作词直接触发)
+      if (t.includes('蹦跳') || t.includes('跳') || t.includes('666')) {
+        triggerAction('boing');
+      } else if (t.includes('吐泡泡') || t.includes('泡泡') || t.includes('888')) {
+        triggerAction('bubbles');
+      } else if (t.includes('睡觉') || t.includes('呼呼') || t.includes('睡')) {
+        triggerAction('sleep');
+      } 
+      // D. 商业化引导：公屏白嫖发大笑，语音智能提醒送礼
+      else if (t.includes('大笑') || t.includes('抱肚子') || t.includes('笑') || t.includes('狂笑')) {
+        startTalking('大笑肚皮会抽筋的～送一个右侧【棒棒糖】就能看奶娃变大抱肚狂笑啦～');
+      } else if (t.includes('啤酒') || t.includes('喝')) {
+        startTalking('想看奶娃吨吨吨吗？送一个【大啤酒】看奶娃打饱嗝哦～');
+      } else if (t.includes('点亮') || t.includes('飞')) {
+        startTalking('送一个【为你点亮】看奶娃VIP插队点歌与唯美升空哦～');
+      } else {
+        // 如果后端连接正常，后端会自动并发调用 AI 回复，避免前端盲复读
+        if (!window.wsConnected) {
+          startTalking(text);
+          setTimeout(stopTalking, 3500);
+        }
+      }
+    }
+
+    function toggleDirectorPanel() {
+      const p = document.getElementById('director-panel');
+      p.classList.toggle('active');
+    }
+  
+    // =======================================================
+    // 智能点歌台与背景音乐播放系统 (Web Audio Jukebox)
+    // =======================================================
+    const bgmPlayer = document.getElementById('bgm-player');
+    const musicTitle = document.getElementById('music-title');
+    const musicQueue = document.getElementById('music-queue');
+    const musicDisc = document.querySelector('.music-disc');
+    const btnPlayToggle = document.getElementById('btn-play-toggle');
+
+        // =======================================================
+    // 24首精选热门曲库池 (全覆盖抖音热榜、洗脑神曲、流行经典)
+    // =======================================================
+    const TRENDING_HOT_SONGS = [
+      { title: "狂暴奶龙摇", cat: "🔥 奶龙洗脑神曲" },
+      { title: "爱如火 (极乐净土版)", cat: "🔥 抖音热榜必点" },
+      { title: "孤勇者", cat: "🔥 燃爆全场" },
+      { title: "乌梅子酱", cat: "✨ 甜美治愈" },
+      { title: "离别开出花", cat: "🌸 治愈流行" },
+      { title: "勇气大爆发", cat: "🍼 萌娃神曲" },
+      { title: "奢香夫人 (DJ版)", cat: "💃 动感摇摆" },
+      { title: "大香蕉", cat: "🍌 欢乐鬼畜" },
+      { title: "月声尽，心灯明", cat: "🏮 国风唯美" },
+      { title: "演员", cat: "🎤 经典情歌" },
+      { title: "晴天", cat: "☀️ 青春回忆" },
+      { title: "恐龙抗狼", cat: "🦖 魔性节奏" },
+      { title: "小苹果", cat: "🍎 国民神曲" },
+      { title: "起风了", cat: "🍃 动听天籁" },
+      { title: "稻香", cat: "🌾 温暖民谣" },
+      { title: "少年", cat: "🏃 热血励志" },
+      { title: "踏山河", cat: "⚔️ 豪迈古风" },
+      { title: "白月光与朱砂痣", cat: "🌙 伤感情歌" },
+      { title: "画绢", cat: "🎨 唯美国风" },
+      { title: "下潜", cat: "🌊 氛围律动" },
+      { title: "爱丫爱丫", cat: "💖 甜妹回忆" },
+      { title: "芒种", cat: "🌾 热门国潮" },
+      { title: "青花瓷", cat: "🏺 中国风代表" },
+      { title: "极乐净土", cat: "🕺 宅舞鼻祖" }
+    ];
+
+// 歌单已转为界面常驻规则与智能语音引导闭环
+
+    // =======================================================
+    // 智能识别送礼人指定歌名机制 (解决“怎么识别送礼人点了什么歌”)
+    // =======================================================
+    // 挂起的 VIP 送礼用户池 (送了【为你点亮】后 90 秒内有效)
+    // pendingVipUsers 已提升至顶部全局
+
+    // 智能从文本中提取观众想点的歌名
+    function extractSongName(text) {
+      if (!text) return null;
+      let cleaned = text.trim().replace(/[\[\]《》]/g, '').trim();
+      
+      // 1. 优先匹配显式点歌关键词
+      const keywords = ['点歌', '想听', '播放', '来一首', '唱一首', '听', '插队', '指定'];
+      for (let kw of keywords) {
+        if (cleaned.includes(kw)) {
+          const idx = cleaned.indexOf(kw);
+          const song = cleaned.substring(idx + kw.length).replace(/[:：]/g, '').trim();
+          if (song && song.length >= 2) return song;
+        }
+      }
+
+      // 2. 如果包含送礼文本，剔除送礼部分
+      let stripped = cleaned;
+      for (let g in GIFT_ACTION_MAP) {
+        stripped = stripped.replace(g, '').trim();
+      }
+      stripped = stripped.replace(/^(送出|送了|来个|插队|VIP点歌|指定点歌|x\d+|\*\d+|[0-9]+个)+/g, '').trim();
+      
+      // 如果剔除送礼前缀后剩下的文字是具体歌名 (2~15字且不是纯数字/代号)
+      if (stripped.length >= 2 && stripped.length <= 16 && !/^[0-9xX*\s]+$/.test(stripped)) {
+        return stripped;
+      }
+      return null;
+    }
+
+    // =======================================================
+    // 10 分钟无观众点歌时，自动随机选一首当下热门歌曲
+    // =======================================================
+    let lastUserSongTime = Date.now();
+    const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 分钟 (600,000 毫秒)
+    let idleAutoDjTimer = null;
+
+    function resetIdleTimer() {
+      lastUserSongTime = Date.now();
+    }
+
+    // 自动轮播已按要求停用：无人点歌时完全静音
+    function startIdleAutoDj() {
+      if (idleAutoDjTimer) clearInterval(idleAutoDjTimer);
+    }
+
+    // 触发自动热门歌曲播放
+    function triggerAutoTrendingSong() {
+      lastUserSongTime = Date.now();
+      const pick = TRENDING_HOT_SONGS[Math.floor(Math.random() * TRENDING_HOT_SONGS.length)];
+      
+      const trackSrc = Math.random() > 0.5 ? "music/happy_chibi_bgm.mp3" : "music/sweet_lullaby_bgm.mp3";
+      currentTrack = {
+        title: pick.title,
+        artist: "🔥 热门推荐 · 自动轮播",
+        src: trackSrc,
+        user: "系统推荐",
+        isAutoTrending: true
+      };
+
+      bgmPlayer.src = currentTrack.src;
+      bgmPlayer.play().then(() => {
+        isPlaying = true;
+        updateMusicUI();
+        playNaiwaAudio(ACTION_VOICES.song_auto, `现在直播间空闲啦，奶娃为大家随机挑选了当下热门金曲《${pick.title}》！点歌要附带“点歌”二字哦，发送「点歌 歌名」就能排上你的歌啦～`);
+        addDanmaku("系统", `[🔥 10分钟空闲自动轮播热门歌曲 《${pick.title}》]`, false);
+      }).catch(e => {
+        updateMusicUI();
+      });
+    }
+
+    // 默认常驻伴奏曲库
+    const defaultPlaylist = [
+      { title: "狂暴奶龙摇", artist: "官方主打", src: "music/happy_chibi_bgm.mp3", user: "官方" },
+      { title: "软糖华尔兹 (Q版伴奏)", artist: "奶娃小乐队", src: "music/happy_chibi_bgm.mp3", user: "官方" },
+      { title: "摇篮小夜曲 (八音盒)", artist: "甜心纯音", src: "music/sweet_lullaby_bgm.mp3", user: "官方" }
+    ];
+
+    let currentTrack = null;
+    let defaultIndex = 0;
+    let requestQueue = []; // 观众点歌插队队列
+    let isPlaying = false;
+
+    // 初始化播放器音量与进度联动
+    bgmPlayer.volume = 0.35;
+    const progressFill = document.getElementById('music-progress-fill');
+    bgmPlayer.ontimeupdate = function() {
+      if (bgmPlayer.duration && progressFill) {
+        const pct = (bgmPlayer.currentTime / bgmPlayer.duration) * 100;
+        progressFill.style.width = `${pct}%`;
+      }
+    };
+
+    // 播放下一首逻辑：没人点歌时完全静音，不轮播任何背景音乐
+    function playNext() {
+      if (requestQueue.length > 0) {
+        // 优先播放观众点歌队列
+        currentTrack = requestQueue.shift();
+        executeTrackPlay(currentTrack);
+      } else {
+        // 没人点歌：彻底停止播放并保持完全静音待机
+        currentTrack = null;
+        isPlaying = false;
+        try {
+          bgmPlayer.pause();
+          bgmPlayer.src = "";
+        } catch(e) {}
+        const progressFill = document.getElementById('music-progress-fill');
+        if (progressFill) progressFill.style.width = '0%';
+        updateMusicUI();
+      }
+    }
+
+    function executeTrackPlay(track) {
+      if (!track || !track.src) return;
+      bgmPlayer.src = track.src;
+      bgmPlayer.play().then(() => {
+        isPlaying = true;
+        updateMusicUI();
+      }).catch(err => {
+        console.log("浏览器等待用户交互后播放音频:", err);
+        isPlaying = false;
+        updateMusicUI();
+      });
+    }
+
+    // 播放完毕自动切下一首
+    bgmPlayer.onended = function() {
+      playNext();
+    };
+
+    // 刷新点歌台界面
+    function updateMusicUI() {
+      if (currentTrack) {
+        const artistDisplay = currentTrack.artist ? ` - ${currentTrack.artist}` : '';
+        let badgeHtml = currentTrack.isOriginal 
+          ? `<span style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 2px 7px; border-radius: 6px; font-size: 13px; font-weight: 700; margin-left: 6px; vertical-align: middle;">原唱母带</span>`
+          : `<span style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; padding: 2px 7px; border-radius: 6px; font-size: 13px; font-weight: 700; margin-left: 6px; vertical-align: middle;">指定歌手</span>`;
+
+        if (currentTrack.isHotRotation) {
+          badgeHtml = `<span style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; padding: 2px 7px; border-radius: 6px; font-size: 13px; font-weight: 700; margin-left: 6px; vertical-align: middle;">🔥 热歌轮播</span>`;
+          musicTitle.innerHTML = `♬ 正在播放：<span style="color: #67e8f9; font-weight: 800;">《${currentTrack.title}》${artistDisplay}</span> ${badgeHtml}`;
+        } else if (currentTrack.isPriority) {
+          musicTitle.innerHTML = `♬ 正在播放：<span style="color: #ffd043; font-weight: 800;">《${currentTrack.title}》${artistDisplay}</span> <span style="background: linear-gradient(135deg, #ff9800, #ff5722); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 14px; font-weight: 800; vertical-align: middle;">👑 VIP插队</span> ${badgeHtml}`;
+        } else {
+          musicTitle.innerHTML = `♬ 正在播放：《${currentTrack.title}》${artistDisplay} ${badgeHtml}`;
+        }
+        const reqEl = document.getElementById('music-requester');
+        if (reqEl) {
+          const tag = currentTrack.isOriginal ? '原唱母带' : '指定版本';
+          reqEl.innerText = (currentTrack.user && currentTrack.user !== '官方' && currentTrack.user !== '系统') ? `[由 @${currentTrack.user} 点播 · ${tag}]` : `[点播歌曲]`;
+        }
+      } else {
+        musicTitle.innerHTML = `♬ 点播台静音待机中 · 发「点歌 歌名」即可点歌`;
+        const reqEl = document.getElementById('music-requester');
+        if (reqEl) {
+          reqEl.innerText = `[静音待机]`;
+        }
+      }
+
+      if (requestQueue.length > 0) {
+        const queueNames = requestQueue.slice(0, 2).map((item, idx) => `${idx + 1}. 《${item.title}》· ${item.user}`);
+        musicQueue.innerText = `排队：${queueNames.join(' · ')} (共${requestQueue.length}首)`;
+      } else {
+        musicQueue.innerText = "当前无排队 · 发「点歌 歌名」即可点歌";
+      }
+
+      // 唱片机转动状态
+      if (isPlaying) {
+        musicDisc.style.animationPlayState = 'running';
+        if (btnPlayToggle) btnPlayToggle.innerText = '⏸️ 暂停BGM';
+      } else {
+        musicDisc.style.animationPlayState = 'paused';
+        if (btnPlayToggle) btnPlayToggle.innerText = '▶️ 播放BGM';
+      }
+    }
+
+    // 观众点歌核心处理函数 (联网检索真实音源，全面支持免费弹幕排队与【为你点亮】9抖币 VIP 极速插队)
+    async function handleSongRequest(songName, userName = "热心观众", isPriority = false) {
+      resetIdleTimer(); // 刷新 10 分钟空闲计时器
+      const cleanName = songName.replace(/^(点歌|播放|想听|来一首|唱一首|插队点歌|VIP点歌|指定点歌|歌曲)/, '').trim() || "特别好听的专属歌";
+
+      addDanmaku("系统", `[🔍 正在全网检索曲库：《${cleanName}》...]`, false);
+
+      let trackTitle = cleanName;
+      let trackArtist = "热门歌手";
+      let trackSrc = requestQueue.length % 2 === 0 ? "music/happy_chibi_bgm.mp3" : "music/sweet_lullaby_bgm.mp3";
+      let isOriginalTrack = true;
+
+      try {
+        const resp = await fetch(`http://localhost:8088/api/music_search?keyword=${encodeURIComponent(cleanName)}`);
+        const data = await resp.json();
+        if (data && data.success && data.url) {
+          trackTitle = data.title;
+          trackArtist = data.artist || "热门歌手";
+          trackSrc = data.url;
+          isOriginalTrack = !!data.is_original;
+          console.log('[点歌匹配成功]', trackTitle, trackArtist, isOriginalTrack ? '原唱' : '指定版本', trackSrc);
+        }
+      } catch(e) {
+        console.warn('[曲库网络检索失败，使用默认伴奏]', e);
+      }
+
+      const newSong = {
+        title: trackTitle,
+        artist: isPriority ? `👑 VIP专属插队 · ${trackArtist}` : trackArtist,
+        src: trackSrc,
+        user: userName,
+        isPriority: isPriority,
+        isOriginal: isOriginalTrack
+      };
+
+      if (isPriority) {
+        // 【VIP 插队特权】：立即插入队列第 1 位并直接切歌播放！
+        requestQueue.unshift(newSong);
+        playNext();
+
+        // 视听大动效反馈：星光升空漂浮 + 音符金光粒子爆发 + 亲口语音欢呼感谢
+        playSFX('assets/sfx/crown_shimmer.wav');
+        setAtmosphere('gold-vip-mode', 2800);
+        const actionPropsEl = document.getElementById('action-props');
+        if (actionPropsEl) {
+          actionPropsEl.innerHTML = `
+            <div class="prop-vip-crown">
+              <div class="royal-crown">👑</div>
+              <div class="vip-banner-gold">👑 VIP霸权插队点歌已激活 👑</div>
+            </div>
+          `;
+        }
+        const voiceText = isOriginalTrack 
+          ? `哇！收到【为你点亮】啦！感谢${userName}开启VIP专属通道，已立刻插队播放原唱《${trackTitle}》～`
+          : `哇！收到【为你点亮】啦！感谢${userName}开启VIP专属通道，已立刻插队播放${trackArtist}版《${trackTitle}》～`;
+        playNaiwaAudio(ACTION_VOICES.vip, voiceText, true);
+        rig.className = 'character-rig anim-float';
+        setEyes('star');
+        setMouth('open');
+        spawnGPUParticles('⭐', 35);
+        spawnGPUParticles('🎵', 30);
+        showGiftToast(userName, '为你点亮 · 插队点歌', 1.8, '👑');
+        addDanmaku(userName, `[👑 送出【为你点亮】VIP插队 《${trackTitle}》]`, true);
+        currentActionTimeout = setTimeout(resetToIdle, 2800);
+      } else {
+        // 普通排队点歌：如果当前是静音待机，立即切歌开播；如果已经在播观众点的歌，则入队排队
+        if (!currentTrack || !isPlaying) {
+          requestQueue.unshift(newSong);
+          playNext();
+        } else {
+          requestQueue.push(newSong);
+          updateMusicUI();
+        }
+        const songMsg = isOriginalTrack 
+          ? `好听好听！${userName}点的原唱《${trackTitle}》排上啦，马上给哥哥姐姐放～`
+          : `好听好听！${userName}特别指定的${trackArtist}版《${trackTitle}》排上啦，马上放～`;
+        playNaiwaAudio(ACTION_VOICES.song_regular, songMsg);
+        rig.className = 'character-rig anim-dance';
+        setEyes('happy');
+        setMouth('open');
+        spawnGPUParticles('🎵', 20);
+        addDanmaku(userName, `[点了歌曲 《${trackTitle}》]`, true);
+        currentActionTimeout = setTimeout(resetToIdle, 2200);
+      }
+    }
+
+    // 播放/暂停切换
+    function toggleBgmPlay() {
+      if (isPlaying) {
+        bgmPlayer.pause();
+        isPlaying = false;
+        updateMusicUI();
+      } else {
+        if (!currentTrack) {
+          playNext();
+        } else {
+          bgmPlayer.play().then(() => {
+            isPlaying = true;
+            updateMusicUI();
+          });
+        }
+      }
+    }
+
+    // 切歌
+    function skipSong() {
+      playNext();
+    }
+
+    // 音量调节
+    function setBgmVolume(val) {
+      userBgmVolume = val / 100.0;
+      if (!isTalking) {
+        bgmPlayer.volume = userBgmVolume;
+      }
+      document.getElementById('vol-text').innerText = `${val}%`;
+    }
+
+    // 测试点歌输入
+    function testRequestSong() {
+      const input = document.getElementById('request-input');
+      const val = input.value.trim();
+      if (val) {
+        handleSongRequest(val, "主播点歌", true);
+        input.value = "";
+      }
+    }
+
+// 弹幕点歌已直接整合进核心 handleDanmakuCommand 引擎
+
+    // 页面加载后默认完全静音待机，不轮播任何音乐，等待观众点歌
+
+    // =======================================================
+    // QQ 音乐 VIP 会员扫码登录与状态同步
+    // =======================================================
+    let qqmusicPollTimer = null;
+    let currentQRSessionId = null;
+    let currentQRType = 'wx';
+
+    async function checkQQMusicStatus() {
+      try {
+        const resp = await fetch('http://localhost:8088/api/qqmusic_status');
+        const data = await resp.json();
+        const statEl = document.getElementById('qqmusic-current-status');
+        const btnLogin = document.getElementById('btn-qqmusic-login');
+        if (data && data.logged_in && !data.is_expired) {
+          if (statEl) statEl.innerHTML = `<span style="color: #10b981; font-weight: 700;">✅ VIP 会员已激活 (账号: ${data.musicid || '已登录'})</span>`;
+          if (btnLogin) btnLogin.innerHTML = `👑 🎵 QQ 音乐 VIP 会员已激活 · 点击重新扫码`;
+          return true;
+        } else {
+          if (statEl) statEl.innerHTML = `<span style="color: #f59e0b;">⚠️ 未登录 VIP 会员 (使用免费音源)</span>`;
+          if (btnLogin) btnLogin.innerHTML = `👑 🎵 扫码登录 QQ 音乐 VIP (激活专属点歌母带库)`;
+          return false;
+        }
+      } catch(e) {
+        return false;
+      }
+    }
+
+    async function openQQMusicModal() {
+      const modal = document.getElementById('qqmusic-modal');
+      if (modal) modal.style.display = 'flex';
+      checkQQMusicStatus();
+      loadQQMusicQR(currentQRType);
+    }
+
+    function closeQQMusicModal() {
+      const modal = document.getElementById('qqmusic-modal');
+      if (modal) modal.style.display = 'none';
+      if (qqmusicPollTimer) {
+        clearInterval(qqmusicPollTimer);
+        qqmusicPollTimer = null;
+      }
+    }
+
+    function switchQQMusicQR(type) {
+      currentQRType = type;
+      const tabWx = document.getElementById('tab-wx');
+      const tabQq = document.getElementById('tab-qq');
+      if (type === 'wx') {
+        tabWx.style.background = '#10b981';
+        tabWx.style.borderColor = '#10b981';
+        tabWx.style.color = '#fff';
+        tabQq.style.background = '#0f172a';
+        tabQq.style.borderColor = '#334155';
+        tabQq.style.color = '#94a3b8';
+      } else {
+        tabQq.style.background = '#10b981';
+        tabQq.style.borderColor = '#10b981';
+        tabQq.style.color = '#fff';
+        tabWx.style.background = '#0f172a';
+        tabWx.style.borderColor = '#334155';
+        tabWx.style.color = '#94a3b8';
+      }
+      loadQQMusicQR(type);
+    }
+
+    async function loadQQMusicQR(type) {
+      if (qqmusicPollTimer) clearInterval(qqmusicPollTimer);
+      const img = document.getElementById('qqmusic-qr-img');
+      const loading = document.getElementById('qqmusic-qr-loading');
+      const statusText = document.getElementById('qqmusic-qr-status');
+      if (img) img.style.display = 'none';
+      if (loading) loading.style.display = 'block';
+      if (statusText) statusText.innerText = '正在生成二维码...';
+
+      try {
+        const resp = await fetch(`http://localhost:8088/api/qqmusic_qr?type=${type}`);
+        const data = await resp.json();
+        if (data && data.success && data.image) {
+          currentQRSessionId = data.session_id;
+          if (img) {
+            img.src = data.image;
+            img.style.display = 'block';
+          }
+          if (loading) loading.style.display = 'none';
+          if (statusText) statusText.innerText = `请使用手机${type === 'wx' ? '微信' : 'QQ'}扫码登录`;
+          startPollingQQMusicQR(currentQRSessionId);
+        } else {
+          if (statusText) statusText.innerText = '生成二维码失败，请重试';
+        }
+      } catch(e) {
+        if (statusText) statusText.innerText = '网络连接异常，请重试';
+      }
+    }
+
+    function startPollingQQMusicQR(sessionId) {
+      if (qqmusicPollTimer) clearInterval(qqmusicPollTimer);
+      qqmusicPollTimer = setInterval(async () => {
+        try {
+          const resp = await fetch(`http://localhost:8088/api/qqmusic_check_qr?session_id=${sessionId}`);
+          const res = await resp.json();
+          const statusText = document.getElementById('qqmusic-qr-status');
+          if (res) {
+            if (res.status === 'done') {
+              clearInterval(qqmusicPollTimer);
+              if (statusText) statusText.innerHTML = `<span style="color: #10b981; font-size: 16px;">🎉 ${res.msg}</span>`;
+              checkQQMusicStatus();
+              addDanmaku('系统', '👑 QQ 音乐 VIP 专属曲库已成功激活！点歌现已全面支持原唱母带！', false);
+              setTimeout(() => {
+                closeQQMusicModal();
+              }, 2000);
+            } else if (res.status === 'scanned') {
+              if (statusText) statusText.innerText = '📱 手机端已扫码，请在手机上点击确认授权';
+            } else if (res.status === 'timeout') {
+              clearInterval(qqmusicPollTimer);
+              if (statusText) statusText.innerText = '⏰ 二维码已过期，点击重新获取';
+            } else if (res.status === 'refused') {
+              clearInterval(qqmusicPollTimer);
+              if (statusText) statusText.innerText = '❌ 手机端已取消授权';
+            }
+          }
+        } catch(e) {}
+      }, 1500);
+    }
+
+    setTimeout(() => {
+      updateMusicUI();
+      checkQQMusicStatus();
+    }, 500);
+
+  </script>
+
+  <!-- QQ音乐会员扫码登录弹窗 -->
+  <div id="qqmusic-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 99999; backdrop-filter: blur(8px); align-items: center; justify-content: center;">
+    <div style="background: #1e293b; border: 2px solid #10b981; border-radius: 20px; width: 400px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.7); text-align: center; color: #fff; position: relative;">
+      <button onclick="closeQQMusicModal()" style="position: absolute; right: 16px; top: 16px; background: transparent; border: none; color: #94a3b8; font-size: 20px; cursor: pointer;">✕</button>
+      <div style="font-size: 20px; font-weight: 800; color: #10b981; margin-bottom: 6px;">👑 绑定 QQ 音乐 VIP 会员</div>
+      <div style="font-size: 13px; color: #94a3b8; margin-bottom: 16px;">扫码后自动激活绿钻/VIP权限，点歌畅享全网原唱无损母带！</div>
+
+      <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 16px;">
+        <button id="tab-wx" onclick="switchQQMusicQR('wx')" style="padding: 6px 16px; border-radius: 8px; border: 1px solid #10b981; background: #10b981; color: #fff; font-weight: 700; cursor: pointer;">微信扫码</button>
+        <button id="tab-qq" onclick="switchQQMusicQR('qq')" style="padding: 6px 16px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #94a3b8; font-weight: 700; cursor: pointer;">QQ扫码</button>
+      </div>
+
+      <div style="position: relative; width: 200px; height: 200px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 8px; display: flex; align-items: center; justify-content: center;">
+        <img id="qqmusic-qr-img" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+        <div id="qqmusic-qr-loading" style="color: #64748b; font-size: 14px;">正在生成二维码...</div>
+      </div>
+
+      <div id="qqmusic-qr-status" style="margin-top: 14px; font-size: 14px; font-weight: 700; color: #ffd043;">等待扫码中...</div>
+
+      <div style="margin-top: 18px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+        <span id="qqmusic-current-status" style="font-size: 13px; color: #94a3b8;">当前状态: 检测中...</span>
+        <button onclick="window.open('https://y.qq.com', '_blank')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;">打开网页版</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

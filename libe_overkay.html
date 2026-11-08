@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>AI直播间竖屏排版模板</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      background: transparent; /* 透明背景，便于叠在模型上方 */
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: #ffffff;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 顶部数据区 */
+    .top-stats {
+      position: absolute;
+      top: 100px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .stat-box { display: flex; flex-direction: column; }
+    .stat-label { font-size: 26px; color: #a0a5b5; margin-bottom: 8px; }
+    .stat-val { font-size: 56px; font-weight: bold; letter-spacing: 1px; }
+    .stat-sub { font-size: 20px; color: #707585; margin-top: 6px; }
+
+    /* 顶部居中免费指令提示 */
+    .free-command-bar {
+      position: absolute;
+      top: 260px;
+      width: 100%;
+      text-align: center;
+    }
+    .command-title { font-size: 30px; font-weight: bold; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+    .command-desc { font-size: 22px; color: #a5b0c5; margin-top: 8px; }
+
+    /* 中部左右两侧互动图标栏 */
+    .action-side {
+      position: absolute;
+      top: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+    .action-left { left: 40px; }
+    .action-right { right: 40px; }
+    .action-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 26px;
+      font-weight: 600;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+    }
+    .action-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+    }
+
+    /* 角色下方的悬浮说话文本框 */
+    .character-say-box {
+      position: absolute;
+      top: 960px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      text-align: center;
+      font-size: 44px;
+      font-weight: bold;
+      color: #ffffff;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8);
+      min-height: 60px;
+      white-space: pre-wrap;
+    }
+
+    /* 下方弹幕列表 */
+    .danmaku-container {
+      position: absolute;
+      bottom: 240px;
+      left: 50px;
+      width: 550px;
+      height: 340px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+    }
+    .danmaku-header {
+      font-size: 28px;
+      font-weight: bold;
+      color: #ffffff;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .danmaku-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .danmaku-item {
+      font-size: 26px;
+      line-height: 1.4;
+      color: #e0e5f5;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+    }
+    .danmaku-user { color: #8ec5fc; font-weight: 500; }
+
+    /* 底部点歌台信息栏 */
+    .music-bar {
+      position: absolute;
+      bottom: 120px;
+      left: 50px;
+      right: 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 18px;
+    }
+    .music-title { font-size: 24px; color: #ffffff; }
+    .music-sub { font-size: 20px; color: #8c93a8; }
+  </style>
+</head>
+<body>
+
+  <!-- 1. 顶部统计数据 -->
+  <div class="top-stats">
+    <div class="stat-box">
+      <div class="stat-label">今日 Token</div>
+      <div class="stat-val" id="token-count">190,854</div>
+      <div class="stat-sub">Gemini Flash 调用计费</div>
+    </div>
+    <div class="stat-box" style="align-items: flex-end;">
+      <div class="stat-label">今日弹幕</div>
+      <div class="stat-val" id="danmaku-count">316</div>
+      <div class="stat-sub">北京时间 · 每日累计</div>
+    </div>
+  </div>
+
+  <!-- 2. 免费玩法提示 -->
+  <div class="free-command-bar">
+    <div class="command-title">免费互动 666 挥手 / 888 吐泡泡</div>
+    <div class="command-desc">发数字即可互动 · 每人间隔 8 秒</div>
+  </div>
+
+  <!-- 3. 左侧动作指令列表 -->
+  <div class="action-side action-left">
+    <div class="action-item"><span class="action-icon">💖</span>心动压扁</div>
+    <div class="action-item"><span class="action-icon">🍧</span>爱到埋住</div>
+    <div class="action-item"><span class="action-icon">🚀</span>狂飙翻车</div>
+    <div class="action-item"><span class="action-icon">🎆</span>激动上头</div>
+    <div class="action-item"><span class="action-icon">🦢</span>天鹅变鸽</div>
+  </div>
+
+  <!-- 4. 右侧动作指令列表 -->
+  <div class="action-side action-right">
+    <div class="action-item">摘星暴击<span class="action-icon">✨</span></div>
+    <div class="action-item">爱心暴击<span class="action-icon">🐰</span></div>
+    <div class="action-item">贪吃过载<span class="action-icon">🎃</span></div>
+    <div class="action-item">惊吓开箱<span class="action-icon">🎁</span></div>
+    <div class="action-item">气球炸场<span class="action-icon">🎈</span></div>
+  </div>
+
+  <!-- 5. 角色脚下/头顶想说的话（跟随文字悬浮） -->
+  <div class="character-say-box" id="character-say-box">
+    呼……
+  </div>
+
+  <!-- 6. 实时滚动弹幕区 -->
+  <div class="danmaku-container">
+    <div class="danmaku-header">💬 实时弹幕</div>
+    <div class="danmaku-list" id="danmaku-list">
+      <div class="danmaku-item"><span class="danmaku-user">陆泽:</span> 888</div>
+      <div class="danmaku-item"><span class="danmaku-user">uchiha.:</span> 你今年几岁了</div>
+      <div class="danmaku-item"><span class="danmaku-user">陆泽:</span> 肥鱼？</div>
+    </div>
+  </div>
+
+  <!-- 7. 底部点歌台 -->
+  <div class="music-bar">
+    <div>
+      <div class="music-title">♬ 正在播放：《月声尽，心灯明》</div>
+      <div class="music-sub">歌手：网络热曲 / 播放中</div>
+    </div>
+    <div class="music-sub">发送：点歌 歌名</div>
+  </div>
+
+  <!-- 与后端 WebSocket 实时同步文字逻辑 -->
+  <script>
+    const sayBox = document.getElementById('character-say-box');
+    const danmakuList = document.getElementById('danmaku-list');
+
+    // 监听 WebSocket 推送（如果接到 Open-LLM-VTuber 的推送端点）
+    try {
+      const socket = new WebSocket('ws://localhost:12393/client-ws');
+      socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        // 如果后端推送了 LLM 思考或回复文本，刷新到悬浮文字中
+        if (data.type === 'llm_delta' || data.text) {
+          sayBox.innerText = data.text || data.delta;
+        }
+      };
+    } catch(e) {
+      console.log('未连接本地 WebSocket，展示预置样式');
+    }
+  </script>
+</body>
+</html>

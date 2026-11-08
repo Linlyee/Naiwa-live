@@ -76,3 +76,50 @@ private/
 mcp_servers.json
 
 .vscode/
+
+# ==========================================
+# Security & Privacy Protection (DO NOT COMMIT)
+# ==========================================
+# Edge Browser User Profile & Session Cookies (Critical Security Risk)
+edge_profile/
+*cookies*.db
+check_qq_cookies.py
+read_locked_cookies.py
+
+# Douyin Danmaku local config with actual Room ID & Large runtimes
+barrage_grab/config.json
+barrage_grab/windowsdesktop-runtime*.exe
+barrage_grab/*.bak
+
+# Temporary / Scratch scripts & Audio/Video test samples
+scratch/
+leak_frames/
+test_frames/
+video_frames/
+douyin_live/test_screenshots/
+douyin_live/*.bak*
+
+# Local test media and captures
+*.mp4
+*.webm
+*.bin
+stream_*.bin
+test_*.mp3
+test_*.wav
+test_*.png
+leak_*.mp3
+leak_*.wav
+temp_*.wav
+gold.wav
+leak.wav
+nailong_audio.mp3
+nailong_archive.mp3
+nailong_ref_8s.mp3
+ref_clean_*.mp3
+douyin_belly_leak.*
+
+# Local device & window temporary logs
+devices.txt
+sound_devices.csv
+test_output.txt
+选择【窗口】

@@ -1,0 +1,20 @@
+{
+  "WebSocketServer": {
+    "Port": 8888,
+    "MaxConnections": 1000,
+    "BufferSize": 8192,
+    "KeepAliveInterval": 30
+  },
+  "WebPush": {
+    "Enable": true,
+    "Url": "http://127.0.0.1:12393/barrage"
+  },
+  "Platforms": {
+    "Douyin": {
+      "Enabled": true,
+      "RoomId": "YOUR_DOUYIN_ROOM_ID",
+      "HeartbeatInterval": 30000,
+      "ReconnectDelay": 5000
+    }
+  }
+}
